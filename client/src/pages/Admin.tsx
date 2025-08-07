@@ -29,6 +29,24 @@ const videoFormSchema = insertVideoSchema.extend({
 
 type VideoForm = z.infer<typeof videoFormSchema>;
 
+// Utility function to extract YouTube ID from various URL formats
+const extractYouTubeId = (url: string): string | null => {
+  // Handle various YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /^([a-zA-Z0-9_-]{11})$/ // Direct ID format
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return match[1];
+    }
+  }
+  
+  return null;
+};
+
 export default function Admin() {
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
@@ -37,6 +55,7 @@ export default function Admin() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [activeTab, setActiveTab] = useState("videos");
+  const [youtubeInput, setYoutubeInput] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -149,6 +168,7 @@ export default function Admin() {
 
   const handleEditVideo = (video: Video) => {
     setSelectedVideo(video);
+    setYoutubeInput(video.youtubeId); // Show the current ID in the input field
     form.reset({
       title: video.title,
       youtubeId: video.youtubeId,
@@ -166,8 +186,28 @@ export default function Admin() {
 
   const handleAddVideo = () => {
     setSelectedVideo(null);
+    setYoutubeInput("");
     form.reset();
     setShowVideoModal(true);
+  };
+
+  const handleYoutubeInputChange = (value: string) => {
+    setYoutubeInput(value);
+    
+    // Try to extract YouTube ID from the input
+    const extractedId = extractYouTubeId(value);
+    if (extractedId) {
+      form.setValue("youtubeId", extractedId);
+      
+      // Also auto-generate thumbnail URL
+      const thumbnailUrl = `https://img.youtube.com/vi/${extractedId}/maxresdefault.jpg`;
+      form.setValue("thumbnailUrl", thumbnailUrl);
+      
+      toast({
+        title: "YouTube ID Extracted",
+        description: `Video ID: ${extractedId}`,
+      });
+    }
   };
 
   const onSubmit = (data: VideoForm) => {
@@ -472,19 +512,42 @@ export default function Admin() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="youtubeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>YouTube ID</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., dQw4w9WgXcQ" data-testid="input-youtube-id" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="youtube-url">YouTube URL or ID</Label>
+                    <Input
+                      id="youtube-url"
+                      placeholder="Paste YouTube URL or enter video ID (e.g., dQw4w9WgXcQ)"
+                      value={youtubeInput}
+                      onChange={(e) => handleYoutubeInputChange(e.target.value)}
+                      data-testid="input-youtube-url"
+                      className="mb-2"
+                    />
+                    <p className="text-sm text-gray-500">
+                      Supports: youtube.com/watch?v=, youtu.be/, or direct video ID
+                    </p>
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="youtubeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Extracted YouTube ID</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Video ID will appear here"
+                            data-testid="input-youtube-id"
+                            {...field}
+                            readOnly
+                            className="bg-gray-50"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
@@ -668,6 +731,41 @@ export default function Admin() {
                   </FormItem>
                 )}
               />
+
+              {/* YouTube Preview */}
+              {form.watch("youtubeId") && (
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="text-lg font-semibold">Video Preview</h4>
+                  <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${form.watch("youtubeId")}`}
+                      title="Video Preview"
+                      className="w-full h-full"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      data-testid="iframe-youtube-preview"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <strong>Video ID:</strong> {form.watch("youtubeId")}
+                    </div>
+                    <div>
+                      <strong>Thumbnail:</strong> 
+                      <a 
+                        href={form.watch("thumbnailUrl")} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline ml-1"
+                        data-testid="link-thumbnail-preview"
+                      >
+                        View
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex space-x-3 pt-4 border-t">
                 <Button 
