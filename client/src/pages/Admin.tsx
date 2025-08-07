@@ -499,7 +499,11 @@ export default function Admin() {
                           max="120"
                           data-testid="input-duration"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -520,7 +524,11 @@ export default function Admin() {
                           max="5"
                           data-testid="input-effort-level"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

@@ -82,8 +82,8 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 sm:px-6 lg:px-8 overflow-y-auto">
+      <div className="max-w-2xl mx-auto pb-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-fit-navy" data-testid="text-app-title">FitSpark</h1>
           <p className="mt-2 text-lg text-gray-600">Start Your 30-Day Fitness Journey</p>
@@ -196,7 +196,11 @@ export default function Register() {
                               placeholder="Your age"
                               data-testid="input-age"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              value={field.value || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -216,7 +220,11 @@ export default function Register() {
                               placeholder="190"
                               data-testid="input-start-weight"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              value={field.value || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -236,7 +244,11 @@ export default function Register() {
                               placeholder="175"
                               data-testid="input-target-weight"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              value={field.value || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
