@@ -13,6 +13,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import ThemeSelector from "@/components/ThemeSelector";
+import WelcomeWizard from "@/components/WelcomeWizard";
 import type { Theme } from "@/lib/themes";
 
 const registerSchema = z.object({
@@ -35,6 +36,8 @@ export default function Register() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<Theme>("fun");
+  const [showWizard, setShowWizard] = useState(true);
+  const [wizardData, setWizardData] = useState<any>(null);
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -43,10 +46,10 @@ export default function Register() {
       password: "",
       name: "",
       email: "",
-      age: 55,
+      age: wizardData?.timeCommitment === 15 ? 65 : wizardData?.timeCommitment === 30 ? 58 : 55,
       startWeight: 190,
       targetWeight: 175,
-      selectedTheme: "fun",
+      selectedTheme: wizardData?.motivationStyle || "fun",
     },
   });
 
@@ -56,10 +59,34 @@ export default function Register() {
     form.setValue("selectedTheme", theme);
   };
 
+  const handleWizardComplete = (goals: any) => {
+    setWizardData(goals);
+    setSelectedTheme(goals.motivationStyle);
+    setTheme(goals.motivationStyle);
+    form.setValue("selectedTheme", goals.motivationStyle);
+    setShowWizard(false);
+  };
+
+  const handleWizardSkip = () => {
+    setShowWizard(false);
+  };
+
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/register", data);
+      const enhancedData = {
+        ...data,
+        fitnessGoals: wizardData || {
+          primaryGoal: 'overall-health',
+          timeCommitment: 30,
+          fitnessLevel: 'beginner',
+          healthConcerns: [],
+          motivationStyle: data.selectedTheme,
+          preferredActivities: []
+        }
+      };
+      
+      const response = await apiRequest("POST", "/api/auth/register", enhancedData);
       const user = await response.json();
       
       login(user);
@@ -68,7 +95,9 @@ export default function Register() {
       
       toast({
         title: "Welcome to FitSpark!",
-        description: "Your personalized 30-day program has been created.",
+        description: wizardData 
+          ? "Your personalized 30-day program has been created based on your goals."
+          : "Your 30-day fitness program is ready to start.",
       });
     } catch (error) {
       toast({
@@ -82,7 +111,14 @@ export default function Register() {
   };
 
   return (
-    <div className="h-screen bg-gray-50 overflow-y-auto">
+    <>
+      {showWizard && (
+        <WelcomeWizard 
+          onComplete={handleWizardComplete}
+          onSkip={handleWizardSkip}
+        />
+      )}
+      <div className="h-screen bg-gray-50 overflow-y-auto">
       <div className="min-h-full py-4 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto pb-8">
           <div className="text-center mb-8">
@@ -292,5 +328,6 @@ export default function Register() {
         </div>
       </div>
     </div>
+    </>
   );
 }

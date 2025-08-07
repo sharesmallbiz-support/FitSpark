@@ -9,7 +9,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, password, name, email, age, startWeight, targetWeight, selectedTheme } = req.body;
+      const { username, password, name, email, age, startWeight, targetWeight, selectedTheme, fitnessGoals } = req.body;
       
       // Check if user exists
       const existingUser = await storage.getUserByUsername(username) || await storage.getUserByEmail(email);
@@ -30,7 +30,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startWeight,
         currentWeight: startWeight,
         targetWeight,
-        selectedTheme
+        selectedTheme,
+        fitnessGoals
       });
 
       // Generate personalized 30-day program
@@ -41,6 +42,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startWeight,
         targetWeight,
         theme: selectedTheme,
+        fitnessGoals: fitnessGoals || {
+          primaryGoal: 'overall-health',
+          timeCommitment: 30,
+          fitnessLevel: 'beginner',
+          healthConcerns: [],
+          motivationStyle: selectedTheme,
+          preferredActivities: []
+        },
         availableVideos: videos
       });
 

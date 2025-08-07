@@ -12,6 +12,14 @@ export interface GenerateProgramParams {
   startWeight: number;
   targetWeight: number;
   theme: Theme;
+  fitnessGoals?: {
+    primaryGoal: string;
+    timeCommitment: number;
+    fitnessLevel: string;
+    healthConcerns: string[];
+    motivationStyle: 'fun' | 'aggressive' | 'drill';
+    preferredActivities: string[];
+  };
   availableVideos: Video[];
 }
 
@@ -30,7 +38,7 @@ export interface DailyWorkoutPlan {
 }
 
 export async function generatePersonalizedProgram(params: GenerateProgramParams): Promise<DailyWorkoutPlan[]> {
-  const { name, age, startWeight, targetWeight, theme, availableVideos } = params;
+  const { name, age, startWeight, targetWeight, theme, fitnessGoals, availableVideos } = params;
   
   const themePersonalities = {
     fun: "encouraging, playful, and positive with emoji and excitement",
@@ -44,12 +52,23 @@ export async function generatePersonalizedProgram(params: GenerateProgramParams)
     return acc;
   }, {} as Record<string, Video[]>);
 
+  const fitnessGoalsText = fitnessGoals ? `
+Fitness Goals & Preferences:
+- Primary Goal: ${fitnessGoals.primaryGoal}
+- Daily Time Commitment: ${fitnessGoals.timeCommitment} minutes
+- Fitness Level: ${fitnessGoals.fitnessLevel}
+- Health Concerns: ${fitnessGoals.healthConcerns.length > 0 ? fitnessGoals.healthConcerns.join(', ') : 'None specified'}
+- Preferred Activities: ${fitnessGoals.preferredActivities.length > 0 ? fitnessGoals.preferredActivities.join(', ') : 'All activities welcome'}
+` : '';
+
   const prompt = `
-Create a personalized 30-day fitness program for ${name}, a ${age}-year-old man looking to lose weight from ${startWeight} lbs to ${targetWeight} lbs.
+Create a personalized 30-day fitness program for ${name}, a ${age}-year-old man looking to ${fitnessGoals?.primaryGoal === 'weight-loss' ? 'lose weight' : fitnessGoals?.primaryGoal === 'strength' ? 'build strength' : fitnessGoals?.primaryGoal === 'endurance' ? 'improve endurance' : fitnessGoals?.primaryGoal === 'flexibility' ? 'increase flexibility' : 'improve overall health'} from ${startWeight} lbs to ${targetWeight} lbs.
 
 Theme: ${theme} - Use a ${themePersonalities[theme]} tone throughout.
-
+${fitnessGoalsText}
 Focus areas: Chair yoga, light weights, walking, and flexibility for men over 55.
+${fitnessGoals?.healthConcerns && fitnessGoals.healthConcerns.length > 0 ? 
+  `\nIMPORTANT: Accommodate these health considerations: ${fitnessGoals.healthConcerns.join(', ')}. Modify exercises accordingly for safety.` : ''}
 
 Available videos by type:
 ${Object.entries(videosByType).map(([type, videos]) => 
@@ -57,13 +76,14 @@ ${Object.entries(videosByType).map(([type, videos]) =>
 ).join('\n')}
 
 Create a progressive 30-day program that:
-1. Starts gentle and builds intensity gradually
-2. Alternates between different exercise types
+1. Starts gentle and builds intensity gradually based on fitness level: ${fitnessGoals?.fitnessLevel || 'beginner'}
+2. Alternates between different exercise types${fitnessGoals?.preferredActivities && fitnessGoals.preferredActivities.length > 0 ? ` (prioritize: ${fitnessGoals.preferredActivities.join(', ')})` : ''}
 3. Includes rest days and active recovery
 4. Provides specific motivation messages for each day in the ${theme} theme style
 5. Uses the available videos when appropriate
-6. Each workout should be 20-45 minutes total
+6. Each workout should target ${fitnessGoals?.timeCommitment || 30} minutes total (adjustable based on user capacity)
 7. Include specific exercise instructions for movements without videos
+8. Ensure exercises are safe and appropriate for any health concerns mentioned
 
 Return a JSON array of 30 daily workout plans with this structure:
 {

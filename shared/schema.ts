@@ -17,6 +17,14 @@ export const users = pgTable("users", {
   currentDay: integer("current_day").notNull().default(1),
   startDate: timestamp("start_date").defaultNow(),
   isAdmin: boolean("is_admin").default(false),
+  fitnessGoals: jsonb("fitness_goals").$type<{
+    primaryGoal: string;
+    timeCommitment: number;
+    fitnessLevel: string;
+    healthConcerns: string[];
+    motivationStyle: 'fun' | 'aggressive' | 'drill';
+    preferredActivities: string[];
+  }>(),
   preferences: jsonb("preferences").$type<{
     notifications: boolean;
     reminderTime: string;
