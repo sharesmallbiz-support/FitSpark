@@ -64,7 +64,7 @@ export class MemStorage implements IStorage {
     const demoUser: User = {
       id: 'demo-user-123',
       username: 'demo',
-      password: '$2b$10$K8zB8YxhMVp4OQ7L6/wNPOkF4D5HrNnEo4X9Vj2WpAzD3Qy6U8Smt2', // password: 'demo123'
+      password: '$2b$10$0dR5YukZCzt80daoyKgtBetjkMhqmdsU0qrSrZ9orKi8lAqrsB3U.', // password: 'demo123'
       name: 'Demo User',
       email: 'demo@fitspark.com',
       age: 58,
@@ -87,7 +87,7 @@ export class MemStorage implements IStorage {
     const adminUser: User = {
       id: 'admin-demo-456',
       username: 'admin',
-      password: '$2b$10$K8zB8YxhMVp4OQ7L6/wNPOkF4D5HrNnEo4X9Vj2WpAzD3Qy6U8Smt2', // password: 'demo123'
+      password: '$2b$10$0dR5YukZCzt80daoyKgtBetjkMhqmdsU0qrSrZ9orKi8lAqrsB3U.', // password: 'demo123'
       name: 'Admin User',
       email: 'admin@fitspark.com',
       age: 45,
