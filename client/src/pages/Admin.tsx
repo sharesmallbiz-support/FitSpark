@@ -70,7 +70,7 @@ export default function Admin() {
   }, [isAuthenticated, user, setLocation]);
 
   const { data: videos = [], isLoading: videosLoading } = useQuery<Video[]>({
-    queryKey: ["/api/videos?approved=false"],
+    queryKey: ["/api/videos"],
     enabled: !!user?.isAdmin,
   });
 
@@ -105,12 +105,14 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({
         title: "Success",
         description: selectedVideo ? "Video updated successfully" : "Video added successfully",
       });
       setShowVideoModal(false);
       setSelectedVideo(null);
+      setYoutubeInput("");
       form.reset();
     },
     onError: () => {
@@ -754,7 +756,7 @@ export default function Admin() {
                     <div>
                       <strong>Thumbnail:</strong> 
                       <a 
-                        href={form.watch("thumbnailUrl")} 
+                        href={form.watch("thumbnailUrl") || ""} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-500 hover:underline ml-1"

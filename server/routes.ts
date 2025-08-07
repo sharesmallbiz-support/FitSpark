@@ -229,9 +229,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { type, theme, approved } = req.query;
       
-      let videos = approved === 'false' 
-        ? await storage.getAllVideos()
-        : await storage.getApprovedVideos();
+      // For admin purposes, default to showing all videos unless specifically requesting only approved
+      let videos = approved === 'true'
+        ? await storage.getApprovedVideos()
+        : await storage.getAllVideos();
 
       if (type) {
         videos = videos.filter(v => v.exerciseType === type);
