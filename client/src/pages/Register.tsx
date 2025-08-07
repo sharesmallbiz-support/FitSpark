@@ -82,9 +82,10 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 px-4 sm:px-6 lg:px-8 overflow-y-auto">
-      <div className="max-w-2xl mx-auto pb-8">
-        <div className="text-center mb-8">
+    <div className="h-screen bg-gray-50 overflow-y-auto">
+      <div className="min-h-full py-4 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto pb-8">
+          <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-fit-navy" data-testid="text-app-title">FitSpark</h1>
           <p className="mt-2 text-lg text-gray-600">Start Your 30-Day Fitness Journey</p>
         </div>
@@ -281,15 +282,14 @@ export default function Register() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link href="/login">
-                  <a className={`font-medium ${themeConfig.colors.text} hover:underline`} data-testid="link-login">
-                    Sign in
-                  </a>
+                <Link href="/login" className={`font-medium ${themeConfig.colors.text} hover:underline`} data-testid="link-login">
+                  Sign in
                 </Link>
               </p>
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

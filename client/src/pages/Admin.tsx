@@ -589,7 +589,7 @@ export default function Admin() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Equipment</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-equipment">
                             <SelectValue />
