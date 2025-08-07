@@ -19,8 +19,8 @@ import Navigation from "@/components/Navigation";
 import VideoPlayer from "@/components/VideoPlayer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertVideoSchema } from "@shared/schema";
-import type { Video, User } from "@shared/schema";
+import { insertVideoSchema, insertUserSchema } from "@shared/schema";
+import type { Video, User, InsertUser } from "@shared/schema";
 import { z } from "zod";
 
 const videoFormSchema = insertVideoSchema.extend({
@@ -28,6 +28,21 @@ const videoFormSchema = insertVideoSchema.extend({
 });
 
 type VideoForm = z.infer<typeof videoFormSchema>;
+
+// User form schema for admin user management
+const userFormSchema = insertUserSchema.extend({
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  if (data.password && data.password !== data.confirmPassword) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type UserForm = z.infer<typeof userFormSchema>;
 
 // Utility function to extract YouTube ID from various URL formats
 const extractYouTubeId = (url: string): string | null => {
@@ -56,6 +71,8 @@ export default function Admin() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [activeTab, setActiveTab] = useState("videos");
   const [youtubeInput, setYoutubeInput] = useState("");
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -92,6 +109,36 @@ export default function Admin() {
       themeCompatibility: ["fun"],
       description: "",
       thumbnailUrl: "",
+    },
+  });
+
+  const userForm = useForm<UserForm>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+      name: "",
+      email: "",
+      age: undefined,
+      startWeight: undefined,
+      currentWeight: undefined,
+      targetWeight: undefined,
+      selectedTheme: "fun",
+      isAdmin: false,
+      fitnessGoals: {
+        primaryGoal: "general-fitness",
+        timeCommitment: 30,
+        fitnessLevel: "beginner",
+        healthConcerns: [],
+        motivationStyle: "fun",
+        preferredActivities: ["chair-yoga"]
+      },
+      preferences: {
+        notifications: true,
+        reminderTime: "09:00",
+        weeklyGoalMinutes: 175
+      }
     },
   });
 
@@ -164,6 +211,55 @@ export default function Admin() {
     }
   });
 
+  // User Management Mutations
+  const userMutation = useMutation({
+    mutationFn: async (data: Partial<UserForm>) => {
+      const { confirmPassword, ...userData } = data;
+      if (selectedUser) {
+        return apiRequest("PATCH", `/api/admin/users/${selectedUser.id}`, userData);
+      } else {
+        return apiRequest("POST", "/api/admin/users", userData);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: selectedUser ? "User updated successfully" : "User created successfully",
+      });
+      setShowUserModal(false);
+      setSelectedUser(null);
+      userForm.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest("DELETE", `/api/admin/users/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (!isAuthenticated || !user?.isAdmin) {
     return null;
   }
@@ -214,6 +310,45 @@ export default function Admin() {
 
   const onSubmit = (data: VideoForm) => {
     videoMutation.mutate(data);
+  };
+
+  const handleEditUser = (userToEdit: User) => {
+    setSelectedUser(userToEdit);
+    userForm.reset({
+      username: userToEdit.username,
+      name: userToEdit.name,
+      email: userToEdit.email,
+      age: userToEdit.age || undefined,
+      startWeight: userToEdit.startWeight || undefined,
+      currentWeight: userToEdit.currentWeight || undefined,
+      targetWeight: userToEdit.targetWeight || undefined,
+      selectedTheme: userToEdit.selectedTheme,
+      isAdmin: userToEdit.isAdmin || false,
+      fitnessGoals: userToEdit.fitnessGoals || {
+        primaryGoal: "general-fitness",
+        timeCommitment: 30,
+        fitnessLevel: "beginner",
+        healthConcerns: [],
+        motivationStyle: "fun",
+        preferredActivities: ["chair-yoga"]
+      },
+      preferences: userToEdit.preferences || {
+        notifications: true,
+        reminderTime: "09:00",
+        weeklyGoalMinutes: 175
+      }
+    });
+    setShowUserModal(true);
+  };
+
+  const handleAddUser = () => {
+    setSelectedUser(null);
+    userForm.reset();
+    setShowUserModal(true);
+  };
+
+  const onUserSubmit = (data: UserForm) => {
+    userMutation.mutate(data);
   };
 
   const getStats = () => {
@@ -432,10 +567,46 @@ export default function Admin() {
 
             <TabsContent value="users" className="space-y-6">
               <Card data-testid="card-user-management">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>User Management</CardTitle>
+                  <Button onClick={handleAddUser} data-testid="button-add-user">
+                    <i className="fas fa-plus mr-2"></i>
+                    Add User
+                  </Button>
                 </CardHeader>
                 <CardContent>
+                  {/* User Statistics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">{allUsers.length}</div>
+                          <div className="text-sm text-gray-600">Total Users</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">
+                            {allUsers.filter(u => u.isAdmin).length}
+                          </div>
+                          <div className="text-sm text-gray-600">Admins</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-600">
+                            {allUsers.filter(u => u.currentDay > 7).length}
+                          </div>
+                          <div className="text-sm text-gray-600">Active (Week+)</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
                   {usersLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -452,29 +623,61 @@ export default function Admin() {
                         <div key={userItem.id} className="border rounded-lg p-4" data-testid={`user-item-${userItem.id}`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
-                              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                              <div className={`w-12 h-12 ${userItem.isAdmin ? 'bg-red-500' : 'bg-blue-500'} rounded-full flex items-center justify-center`}>
                                 <span className="text-white font-semibold">
                                   {userItem.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                                 </span>
                               </div>
                               <div>
                                 <h4 className="font-semibold" data-testid={`user-name-${userItem.id}`}>
-                                  {userItem.name}
+                                  {userItem.name} {userItem.username && `(@${userItem.username})`}
                                 </h4>
                                 <p className="text-sm text-gray-600">{userItem.email}</p>
-                                <p className="text-sm text-gray-500">
-                                  Day {userItem.currentDay}/30 • {userItem.selectedTheme} theme
-                                </p>
+                                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                  <span>Day {userItem.currentDay}/30</span>
+                                  <span>•</span>
+                                  <span className="capitalize">{userItem.selectedTheme} theme</span>
+                                  {userItem.fitnessGoals && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="capitalize">{userItem.fitnessGoals.primaryGoal.replace('-', ' ')}</span>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             
-                            <div className="text-right">
-                              <Badge variant={userItem.isAdmin ? "default" : "secondary"}>
-                                {userItem.isAdmin ? "Admin" : "User"}
-                              </Badge>
-                              <p className="text-sm text-gray-500 mt-1">
-                                Started: {userItem.startDate ? new Date(userItem.startDate).toLocaleDateString() : 'N/A'}
-                              </p>
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <Badge variant={userItem.isAdmin ? "default" : "secondary"}>
+                                  {userItem.isAdmin ? "Admin" : "User"}
+                                </Badge>
+                                <p className="text-sm text-gray-500 mt-1">
+                                  Started: {userItem.startDate ? new Date(userItem.startDate).toLocaleDateString() : 'N/A'}
+                                </p>
+                              </div>
+                              
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditUser(userItem)}
+                                  data-testid={`button-edit-user-${userItem.id}`}
+                                >
+                                  <i className="fas fa-edit mr-1"></i>
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => deleteUserMutation.mutate(userItem.id)}
+                                  disabled={deleteUserMutation.isPending || userItem.id === user?.id}
+                                  data-testid={`button-delete-user-${userItem.id}`}
+                                >
+                                  <i className="fas fa-trash mr-1"></i>
+                                  Delete
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -786,6 +989,278 @@ export default function Admin() {
                   data-testid="button-save-video"
                 >
                   {videoMutation.isPending ? "Saving..." : selectedVideo ? "Update Video" : "Add Video"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Form Modal */}
+      <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" data-testid="modal-user-form">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedUser ? "Edit User" : "Add New User"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <Form {...userForm}>
+            <form onSubmit={userForm.handleSubmit(onUserSubmit)} className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={userForm.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Username" data-testid="input-username" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="user@example.com" data-testid="input-email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" data-testid="input-name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="age"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Age</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="18"
+                          max="100"
+                          data-testid="input-age"
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Password Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={userForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{selectedUser ? "New Password (optional)" : "Password *"}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder={selectedUser ? "Leave blank to keep current" : "Password"}
+                          data-testid="input-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Confirm password"
+                          data-testid="input-confirm-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Fitness Information */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={userForm.control}
+                  name="startWeight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Weight (lbs)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="50"
+                          max="500"
+                          data-testid="input-start-weight"
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="currentWeight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Weight (lbs)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="50"
+                          max="500"
+                          data-testid="input-current-weight"
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="targetWeight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Weight (lbs)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="50"
+                          max="500"
+                          data-testid="input-target-weight"
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val === '' ? undefined : parseInt(val) || 0);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Theme and Admin */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={userForm.control}
+                  name="selectedTheme"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Coaching Theme</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-theme">
+                            <SelectValue placeholder="Select theme" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="fun">Fun & Encouraging</SelectItem>
+                          <SelectItem value="aggressive">Aggressive & Challenging</SelectItem>
+                          <SelectItem value="drill">Drill Sergeant</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="isAdmin"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-is-admin"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Administrator</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Grant admin privileges to this user
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowUserModal(false)}
+                  className="flex-1"
+                  data-testid="button-cancel-user"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={userMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-save-user"
+                >
+                  {userMutation.isPending ? "Saving..." : selectedUser ? "Update User" : "Create User"}
                 </Button>
               </div>
             </form>

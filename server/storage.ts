@@ -19,6 +19,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  deleteUser(id: string): Promise<void>;
   
   // Workout Plans
   getWorkoutPlan(userId: string, day: number): Promise<WorkoutPlan | undefined>;
@@ -75,6 +77,14 @@ export class MemStorage implements IStorage {
       currentDay: 5,
       startDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
       isAdmin: false,
+      fitnessGoals: {
+        primaryGoal: 'weight-loss',
+        timeCommitment: 30,
+        fitnessLevel: 'beginner',
+        healthConcerns: ['joint-pain', 'low-energy'],
+        motivationStyle: 'fun',
+        preferredActivities: ['chair-yoga', 'walking']
+      },
       preferences: {
         notifications: true,
         reminderTime: '09:00',
@@ -98,6 +108,14 @@ export class MemStorage implements IStorage {
       currentDay: 1,
       startDate: new Date(),
       isAdmin: true,
+      fitnessGoals: {
+        primaryGoal: 'strength-building',
+        timeCommitment: 45,
+        fitnessLevel: 'intermediate',
+        healthConcerns: [],
+        motivationStyle: 'aggressive',
+        preferredActivities: ['weights', 'elliptical']
+      },
       preferences: {
         notifications: true,
         reminderTime: '08:00',
@@ -105,6 +123,124 @@ export class MemStorage implements IStorage {
       }
     };
     this.users.set(adminUser.id, adminUser);
+
+    // Add more mock users for comprehensive user management testing
+    const mockUsers = [
+      {
+        id: 'user-001',
+        username: 'john_walker',
+        password: '$2b$10$0dR5YukZCzt80daoyKgtBetjkMhqmdsU0qrSrZ9orKi8lAqrsB3U.',
+        name: 'John Walker',
+        email: 'john.walker@example.com',
+        age: 62,
+        startWeight: 200,
+        currentWeight: 195,
+        targetWeight: 180,
+        selectedTheme: 'drill' as const,
+        currentDay: 12,
+        startDate: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000),
+        isAdmin: false,
+        fitnessGoals: {
+          primaryGoal: 'weight-loss',
+          timeCommitment: 45,
+          fitnessLevel: 'beginner',
+          healthConcerns: ['high-blood-pressure', 'diabetes'],
+          motivationStyle: 'drill' as const,
+          preferredActivities: ['walking', 'elliptical']
+        },
+        preferences: {
+          notifications: true,
+          reminderTime: '07:30',
+          weeklyGoalMinutes: 225
+        }
+      },
+      {
+        id: 'user-002',
+        username: 'sarah_fit',
+        password: '$2b$10$0dR5YukZCzt80daoyKgtBetjkMhqmdsU0qrSrZ9orKi8lAqrsB3U.',
+        name: 'Sarah Mitchell',
+        email: 'sarah.mitchell@example.com',
+        age: 55,
+        startWeight: 160,
+        currentWeight: 158,
+        targetWeight: 150,
+        selectedTheme: 'fun' as const,
+        currentDay: 8,
+        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        isAdmin: false,
+        fitnessGoals: {
+          primaryGoal: 'flexibility',
+          timeCommitment: 30,
+          fitnessLevel: 'intermediate',
+          healthConcerns: ['joint-pain'],
+          motivationStyle: 'fun' as const,
+          preferredActivities: ['chair-yoga', 'walking']
+        },
+        preferences: {
+          notifications: true,
+          reminderTime: '10:00',
+          weeklyGoalMinutes: 150
+        }
+      },
+      {
+        id: 'user-003',
+        username: 'mike_strong',
+        password: '$2b$10$0dR5YukZCzt80daoyKgtBetjkMhqmdsU0qrSrZ9orKi8lAqrsB3U.',
+        name: 'Michael Thompson',
+        email: 'mike.thompson@example.com',
+        age: 59,
+        startWeight: 185,
+        currentWeight: 182,
+        targetWeight: 175,
+        selectedTheme: 'aggressive' as const,
+        currentDay: 18,
+        startDate: new Date(Date.now() - 17 * 24 * 60 * 60 * 1000),
+        isAdmin: false,
+        fitnessGoals: {
+          primaryGoal: 'strength-building',
+          timeCommitment: 40,
+          fitnessLevel: 'intermediate',
+          healthConcerns: [],
+          motivationStyle: 'aggressive' as const,
+          preferredActivities: ['weights', 'elliptical']
+        },
+        preferences: {
+          notifications: true,
+          reminderTime: '06:00',
+          weeklyGoalMinutes: 200
+        }
+      },
+      {
+        id: 'user-004',
+        username: 'linda_yoga',
+        password: '$2b$10$0dR5YukZCzt80daoyKgtBetjkMhqmdsU0qrSrZ9orKi8lAqrsB3U.',
+        name: 'Linda Rodriguez',
+        email: 'linda.rodriguez@example.com',
+        age: 67,
+        startWeight: 150,
+        currentWeight: 148,
+        targetWeight: 145,
+        selectedTheme: 'fun' as const,
+        currentDay: 25,
+        startDate: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000),
+        isAdmin: false,
+        fitnessGoals: {
+          primaryGoal: 'balance-stability',
+          timeCommitment: 25,
+          fitnessLevel: 'beginner',
+          healthConcerns: ['balance-issues', 'low-energy'],
+          motivationStyle: 'fun' as const,
+          preferredActivities: ['chair-yoga']
+        },
+        preferences: {
+          notifications: false,
+          reminderTime: '14:00',
+          weeklyGoalMinutes: 125
+        }
+      }
+    ];
+
+    mockUsers.forEach(user => this.users.set(user.id, user));
 
     // Add sample progress for demo user
     for (let i = 1; i <= 4; i++) {
@@ -240,13 +376,21 @@ export class MemStorage implements IStorage {
       id,
       currentDay: 1,
       startDate: new Date(),
-      isAdmin: false,
+      isAdmin: insertUser.isAdmin || false,
       age: insertUser.age || null,
       startWeight: insertUser.startWeight || null,
       currentWeight: insertUser.currentWeight || null,
       targetWeight: insertUser.targetWeight || null,
       selectedTheme: insertUser.selectedTheme || 'fun',
-      preferences: {
+      fitnessGoals: insertUser.fitnessGoals || {
+        primaryGoal: 'general-fitness',
+        timeCommitment: 30,
+        fitnessLevel: 'beginner',
+        healthConcerns: [],
+        motivationStyle: 'fun',
+        preferredActivities: ['chair-yoga']
+      },
+      preferences: insertUser.preferences || {
         notifications: true,
         reminderTime: "09:00",
         weeklyGoalMinutes: 175
@@ -254,6 +398,26 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    this.users.delete(id);
+    // Also delete related data
+    Array.from(this.workoutPlans.entries())
+      .filter(([_, plan]) => plan.userId === id)
+      .forEach(([key, _]) => this.workoutPlans.delete(key));
+    
+    Array.from(this.dailyProgress.entries())
+      .filter(([_, progress]) => progress.userId === id)
+      .forEach(([key, _]) => this.dailyProgress.delete(key));
+      
+    Array.from(this.achievements.entries())
+      .filter(([_, achievement]) => achievement.userId === id)
+      .forEach(([key, _]) => this.achievements.delete(key));
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
