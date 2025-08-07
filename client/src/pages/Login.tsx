@@ -61,36 +61,36 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Hero Section */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-fit-navy to-blue-700 flex items-center justify-center p-8">
+      <div className="lg:w-1/2 bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-8">
         <div className="max-w-md text-white text-center lg:text-left">
-          <h1 className="text-5xl font-bold mb-4" data-testid="text-app-title">FitSpark</h1>
-          <h2 className="text-2xl font-semibold mb-6">Reignite Your Fitness Journey</h2>
+          <h1 className="text-5xl font-bold mb-4 text-yellow-400" data-testid="text-app-title">FitSpark</h1>
+          <h2 className="text-2xl font-semibold mb-6 text-gray-100">Reignite Your Fitness Journey</h2>
           
           <div className="space-y-4 mb-8">
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <p className="text-lg">Personalized 30-day fitness programs</p>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full flex-shrink-0"></div>
+              <p className="text-lg text-gray-200">Personalized 30-day fitness programs</p>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <p className="text-lg">Chair yoga, walking & gentle strength training</p>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full flex-shrink-0"></div>
+              <p className="text-lg text-gray-200">Chair yoga, walking & gentle strength training</p>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <p className="text-lg">AI-powered coaching with 3 motivational themes</p>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full flex-shrink-0"></div>
+              <p className="text-lg text-gray-200">AI-powered coaching with 3 motivational themes</p>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <p className="text-lg">Daily progress tracking & achievements</p>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full flex-shrink-0"></div>
+              <p className="text-lg text-gray-200">Daily progress tracking & achievements</p>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-6">
-            <p className="text-sm italic">"Finally, a fitness program designed for men over 55 that actually understands our needs. I've lost 15 pounds and feel stronger than I have in years!"</p>
-            <p className="text-xs mt-2 font-semibold">- Mark, Age 58</p>
+          <div className="bg-yellow-400/20 border border-yellow-400/30 rounded-lg p-4 mb-6">
+            <p className="text-sm italic text-gray-100">"Finally, a fitness program designed for men over 55 that actually understands our needs. I've lost 15 pounds and feel stronger than I have in years!"</p>
+            <p className="text-xs mt-2 font-semibold text-yellow-400">- Mark, Age 58</p>
           </div>
 
-          <p className="text-lg font-medium">Ready to get back in shape?</p>
+          <p className="text-lg font-medium text-gray-100">Ready to get back in shape?</p>
         </div>
       </div>
 
