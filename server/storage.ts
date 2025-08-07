@@ -60,7 +60,98 @@ export class MemStorage implements IStorage {
   }
 
   private seedInitialData() {
-    // Add some sample videos for different exercise types and themes
+    // Seed demo user for evaluation
+    const demoUser: User = {
+      id: 'demo-user-123',
+      username: 'demo',
+      password: '$2b$10$K8zB8YxhMVp4OQ7L6/wNPOkF4D5HrNnEo4X9Vj2WpAzD3Qy6U8Smt2', // password: 'demo123'
+      name: 'Demo User',
+      email: 'demo@fitspark.com',
+      age: 58,
+      startWeight: 190,
+      currentWeight: 185,
+      targetWeight: 175,
+      selectedTheme: 'fun',
+      currentDay: 5,
+      startDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+      isAdmin: false,
+      preferences: {
+        notifications: true,
+        reminderTime: '09:00',
+        weeklyGoalMinutes: 175
+      }
+    };
+    this.users.set(demoUser.id, demoUser);
+
+    // Add admin demo user
+    const adminUser: User = {
+      id: 'admin-demo-456',
+      username: 'admin',
+      password: '$2b$10$K8zB8YxhMVp4OQ7L6/wNPOkF4D5HrNnEo4X9Vj2WpAzD3Qy6U8Smt2', // password: 'demo123'
+      name: 'Admin User',
+      email: 'admin@fitspark.com',
+      age: 45,
+      startWeight: 180,
+      currentWeight: 180,
+      targetWeight: 170,
+      selectedTheme: 'aggressive',
+      currentDay: 1,
+      startDate: new Date(),
+      isAdmin: true,
+      preferences: {
+        notifications: true,
+        reminderTime: '08:00',
+        weeklyGoalMinutes: 200
+      }
+    };
+    this.users.set(adminUser.id, adminUser);
+
+    // Add sample progress for demo user
+    for (let i = 1; i <= 4; i++) {
+      const progress: DailyProgress = {
+        id: `progress-${i}`,
+        userId: demoUser.id,
+        day: i,
+        date: new Date(Date.now() - (5 - i) * 24 * 60 * 60 * 1000),
+        completed: true,
+        minutesCompleted: 25 + Math.floor(Math.random() * 10),
+        weight: 190 - i,
+        mood: Math.floor(Math.random() * 5) + 1,
+        exercises: [
+          { name: 'Chair Yoga', completed: true, duration: 15 },
+          { name: 'Light Weights', completed: true, duration: 10 }
+        ] as { name: string; completed: boolean; duration: number; }[],
+        notes: i === 1 ? 'Great first day!' : i === 4 ? 'Feeling stronger!' : null
+      };
+      this.dailyProgress.set(progress.id, progress);
+    }
+
+    // Add sample achievements for demo user
+    const achievements: Achievement[] = [
+      {
+        id: 'achievement-1',
+        userId: demoUser.id,
+        badgeType: 'first-workout',
+        title: 'First Steps',
+        description: 'Completed your first workout!',
+        theme: 'fun',
+        icon: '🎉',
+        earnedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: 'achievement-2',
+        userId: demoUser.id,
+        badgeType: 'week-1',
+        title: 'Week Warrior',
+        description: 'Completed your first week!',
+        theme: 'fun',
+        icon: '💪',
+        earnedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+      }
+    ];
+    achievements.forEach(achievement => this.achievements.set(achievement.id, achievement));
+
+    // Add comprehensive video library for evaluation
     const sampleVideos: (InsertVideo & { id: string, isApproved: boolean, createdAt: Date })[] = [
       {
         id: randomUUID(),
@@ -71,8 +162,8 @@ export class MemStorage implements IStorage {
         skillLevel: "beginner",
         effortLevel: 2,
         equipment: "none",
-        themeCompatibility: ["fun", "drill"],
-        description: "Gentle morning chair yoga routine perfect for beginners",
+        themeCompatibility: ["fun", "drill"] as string[],
+        description: "Gentle morning chair yoga routine perfect for beginners" as string | null,
         thumbnailUrl: "",
         isApproved: true,
         createdAt: new Date(),
@@ -154,6 +245,7 @@ export class MemStorage implements IStorage {
       startWeight: insertUser.startWeight || null,
       currentWeight: insertUser.currentWeight || null,
       targetWeight: insertUser.targetWeight || null,
+      selectedTheme: insertUser.selectedTheme || 'fun',
       preferences: {
         notifications: true,
         reminderTime: "09:00",
@@ -193,6 +285,7 @@ export class MemStorage implements IStorage {
       id,
       description: insertPlan.description || null,
       motivationMessage: insertPlan.motivationMessage || null,
+      exercises: insertPlan.exercises as { name: string; duration: number; videoId?: string; instructions: string; }[],
       createdAt: new Date()
     };
     this.workoutPlans.set(id, plan);
@@ -239,6 +332,7 @@ export class MemStorage implements IStorage {
       equipment: insertVideo.equipment || null,
       description: insertVideo.description || null,
       thumbnailUrl: insertVideo.thumbnailUrl || null,
+      themeCompatibility: insertVideo.themeCompatibility as string[],
       isApproved: false,
       createdAt: new Date()
     };
@@ -284,7 +378,7 @@ export class MemStorage implements IStorage {
       minutesCompleted: insertProgress.minutesCompleted || null,
       weight: insertProgress.weight || null,
       completed: insertProgress.completed || null,
-      exercises: insertProgress.exercises || null,
+      exercises: (insertProgress.exercises as { name: string; completed: boolean; duration: number; }[]) || null,
       notes: insertProgress.notes || null,
       mood: insertProgress.mood || null,
       date: new Date()
@@ -307,7 +401,7 @@ export class MemStorage implements IStorage {
   async getUserAchievements(userId: string): Promise<Achievement[]> {
     return Array.from(this.achievements.values())
       .filter(achievement => achievement.userId === userId)
-      .sort((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime());
+      .sort((a, b) => (b.earnedAt ? new Date(b.earnedAt).getTime() : 0) - (a.earnedAt ? new Date(a.earnedAt).getTime() : 0));
   }
 
   async createAchievement(insertAchievement: InsertAchievement): Promise<Achievement> {

@@ -127,10 +127,12 @@ export default function Login() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <Link href="/register">
-                  <a className={`font-medium ${themeConfig.colors.text} hover:underline`} data-testid="link-register">
-                    Sign up for your 30-day journey
-                  </a>
+                <Link 
+                  href="/register"
+                  className={`font-medium ${themeConfig.colors.text} hover:underline`}
+                  data-testid="link-register"
+                >
+                  Sign up for your 30-day journey
                 </Link>
               </p>
             </div>

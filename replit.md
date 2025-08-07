@@ -26,13 +26,13 @@ Preferred communication style: Simple, everyday language.
 - **AI Integration**: OpenAI GPT-4o for personalized workout generation and motivational content
 
 ### Data Storage Solutions
-- **Primary Database**: PostgreSQL using Neon serverless
-- **Schema Design**: 
-  - Users table with fitness metrics and theme preferences
-  - Workout plans with JSON exercise arrays and AI-generated content
-  - Videos table for YouTube integration with exercise categorization
-  - Daily progress tracking with mood and completion metrics
-  - Achievement system with badge types and unlocking logic
+- **Primary Storage**: In-memory storage with comprehensive mock data for evaluation
+- **Mock Data Includes**: 
+  - Demo users (regular user and admin) with pre-populated fitness metrics
+  - Sample workout plans with AI-generated content structure
+  - Video library with YouTube integration and exercise categorization
+  - Multi-day progress tracking with mood and completion metrics
+  - Achievement system with earned badges and progression logic
 
 ### Authentication and Authorization
 - **Registration Flow**: Multi-step with fitness goals, weight targets, and theme selection
@@ -41,9 +41,15 @@ Preferred communication style: Simple, everyday language.
 - **Security**: Bcrypt password hashing with input validation using Zod schemas
 
 ### External Dependencies
-- **Database**: Neon PostgreSQL serverless database
 - **AI Services**: OpenAI API for personalized content generation
 - **Video Content**: YouTube embedded player integration
 - **UI Framework**: Radix UI primitives for accessible components
 - **Build Tools**: Vite with TypeScript, PostCSS, and Autoprefixer
 - **Deployment**: Replit-optimized with development banner and cartographer integration
+
+### Evaluation Setup
+- **Demo Users**: Pre-configured accounts for immediate testing
+  - Regular User: username: `demo`, password: `demo123` (5 days progress)
+  - Admin User: username: `admin`, password: `demo123` (full admin access)
+- **Mock Data**: Complete dataset including progress, achievements, and video library
+- **No Database Dependencies**: Fully functional with in-memory storage only
