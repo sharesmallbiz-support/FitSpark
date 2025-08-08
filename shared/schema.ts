@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { pgTable, text, varchar, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -93,6 +93,34 @@ export const achievements = pgTable("achievements", {
   earnedAt: timestamp("earned_at").defaultNow(),
   theme: text("theme").notNull(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  workoutPlans: many(workoutPlans),
+  dailyProgress: many(dailyProgress),
+  achievements: many(achievements),
+}));
+
+export const workoutPlansRelations = relations(workoutPlans, ({ one }) => ({
+  user: one(users, {
+    fields: [workoutPlans.userId],
+    references: [users.id],
+  }),
+}));
+
+export const dailyProgressRelations = relations(dailyProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyProgress.userId],
+    references: [users.id],
+  }),
+}));
+
+export const achievementsRelations = relations(achievements, ({ one }) => ({
+  user: one(users, {
+    fields: [achievements.userId],
+    references: [users.id],
+  }),
+}));
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
