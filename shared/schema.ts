@@ -17,6 +17,9 @@ export const users = pgTable("users", {
   currentDay: integer("current_day").notNull().default(1),
   startDate: timestamp("start_date").defaultNow(),
   isAdmin: boolean("is_admin").default(false),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastWorkoutDate: timestamp("last_workout_date"),
   fitnessGoals: jsonb("fitness_goals").$type<{
     primaryGoal: string;
     timeCommitment: number;
