@@ -2,11 +2,12 @@
 
 ## Overview
 
-FitSpark is a personalized 30-day fitness platform designed specifically for men over 55. The application provides customized workout programs with three distinct motivational themes (Fun, Aggressive, and Drill Sergeant), progress tracking, achievement systems, and AI-powered personalization. Users receive daily workout plans featuring chair yoga, light weights, walking routines, and elliptical exercises, with integrated YouTube video content and motivational messaging.
+FitSpark is a personalized 30-day fitness platform designed specifically for people over 55. The application provides customized workout programs with three distinct motivational themes (Fun, Aggressive, and Drill Sergeant), progress tracking, achievement systems, and AI-powered personalization. Users receive daily workout plans featuring chair yoga, light weights, walking routines, and elliptical exercises, with integrated YouTube video content and motivational messaging.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Inclusivity: Application should use gender-neutral language for all people over 55, not specifically targeting men.
 
 ## System Architecture
 

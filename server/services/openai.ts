@@ -62,11 +62,11 @@ Fitness Goals & Preferences:
 ` : '';
 
   const prompt = `
-Create a personalized 30-day fitness program for ${name}, a ${age}-year-old man looking to ${fitnessGoals?.primaryGoal === 'weight-loss' ? 'lose weight' : fitnessGoals?.primaryGoal === 'strength' ? 'build strength' : fitnessGoals?.primaryGoal === 'endurance' ? 'improve endurance' : fitnessGoals?.primaryGoal === 'flexibility' ? 'increase flexibility' : 'improve overall health'} from ${startWeight} lbs to ${targetWeight} lbs.
+Create a personalized 30-day fitness program for ${name}, a ${age}-year-old person looking to ${fitnessGoals?.primaryGoal === 'weight-loss' ? 'lose weight' : fitnessGoals?.primaryGoal === 'strength' ? 'build strength' : fitnessGoals?.primaryGoal === 'endurance' ? 'improve endurance' : fitnessGoals?.primaryGoal === 'flexibility' ? 'increase flexibility' : 'improve overall health'} from ${startWeight} lbs to ${targetWeight} lbs.
 
 Theme: ${theme} - Use a ${themePersonalities[theme]} tone throughout.
 ${fitnessGoalsText}
-Focus areas: Chair yoga, light weights, walking, and flexibility for men over 55.
+Focus areas: Chair yoga, light weights, walking, and flexibility for people over 55.
 ${fitnessGoals?.healthConcerns && fitnessGoals.healthConcerns.length > 0 ? 
   `\nIMPORTANT: Accommodate these health considerations: ${fitnessGoals.healthConcerns.join(', ')}. Modify exercises accordingly for safety.` : ''}
 
@@ -109,7 +109,7 @@ Return a JSON array of 30 daily workout plans with this structure:
       messages: [
         {
           role: "system",
-          content: "You are a certified fitness trainer specializing in programs for men over 55. Create safe, progressive, and engaging workout plans. Always respond with valid JSON."
+          content: "You are a certified fitness trainer specializing in programs for people over 55. Create safe, progressive, and engaging workout plans. Always respond with valid JSON."
         },
         {
           role: "user",
@@ -155,7 +155,7 @@ Respond with just the motivational message, no extra formatting.
       messages: [
         {
           role: "system",
-          content: "You are a motivational fitness coach specializing in encouraging men over 55. Create inspiring, theme-appropriate messages."
+          content: "You are a motivational fitness coach specializing in encouraging people over 55. Create inspiring, theme-appropriate messages."
         },
         {
           role: "user",

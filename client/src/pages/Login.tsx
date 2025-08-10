@@ -86,7 +86,7 @@ export default function Login() {
           </div>
 
           <div className="bg-yellow-400/20 border border-yellow-400/30 rounded-lg p-4 mb-6">
-            <p className="text-sm italic text-gray-100">"Finally, a fitness program designed for men over 55 that actually understands our needs. I've lost 15 pounds and feel stronger than I have in years!"</p>
+            <p className="text-sm italic text-gray-100">"Finally, a fitness program designed for people over 55 that actually understands our needs. I've lost 15 pounds and feel stronger than I have in years!"</p>
             <p className="text-xs mt-2 font-semibold text-yellow-400">- Mark, Age 58</p>
           </div>
 
