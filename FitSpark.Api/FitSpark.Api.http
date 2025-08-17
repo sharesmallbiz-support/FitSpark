@@ -1,0 +1,6 @@
+@FitSpark.Api_HostAddress = http://localhost:5155
+
+GET {{FitSpark.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { WorkoutPlan, User } from "@shared/schema";
 
+interface PlanExercise { name: string; duration: number; completed?: boolean; videoId?: string; instructions?: string }
+
 interface WorkoutModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,11 +25,18 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
   const { updateUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [exerciseStates, setExerciseStates] = useState(
-    workout.exercises.map(exercise => ({ 
-      name: exercise.name, 
-      completed: false, 
-      duration: exercise.duration 
+  const parsedExercises: PlanExercise[] = Array.isArray(workout.exercises)
+    ? (workout.exercises as any)
+    : typeof workout.exercises === 'string' && workout.exercises.trim().startsWith('[')
+      ? (() => { try { return JSON.parse(workout.exercises) } catch { return [] } })()
+      : [];
+  const [exerciseStates, setExerciseStates] = useState<PlanExercise[]>(
+    parsedExercises.map(exercise => ({
+      name: exercise.name,
+      completed: false,
+      duration: exercise.duration,
+      videoId: exercise.videoId,
+      instructions: exercise.instructions
     }))
   );
   const [notes, setNotes] = useState("");
@@ -42,7 +51,7 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
       queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "achievements"] });
       
       // Update user's current day
-      const nextDay = user.currentDay + 1;
+  const nextDay = (user.currentDay || 0) + 1;
       if (nextDay <= 30) {
         updateUser({ currentDay: nextDay });
       }
@@ -71,8 +80,8 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
   };
 
   const handleSubmit = () => {
-    const completedExercises = exerciseStates.filter(e => e.completed);
-    const minutesCompleted = completedExercises.reduce((total, e) => total + e.duration, 0);
+  const completedExercises = exerciseStates.filter(e => e.completed);
+  const minutesCompleted = completedExercises.reduce((total, e) => total + (e.duration || 0), 0);
     const isWorkoutCompleted = completedExercises.length === exerciseStates.length;
 
     progressMutation.mutate({
@@ -86,7 +95,7 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
   };
 
   const completedCount = exerciseStates.filter(e => e.completed).length;
-  const totalMinutes = exerciseStates.filter(e => e.completed).reduce((total, e) => total + e.duration, 0);
+  const totalMinutes = exerciseStates.filter(e => e.completed).reduce((total, e) => total + (e.duration || 0), 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -134,9 +143,9 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
                     </span>
                     <span className="text-sm text-gray-600 ml-2">{exercise.duration} min</span>
                   </div>
-                  {workout.exercises[index]?.instructions && (
+          {exercise.instructions && (
                     <p className="text-sm text-gray-600 mt-1">
-                      {workout.exercises[index].instructions}
+            {exercise.instructions}
                     </p>
                   )}
                 </div>

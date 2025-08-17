@@ -56,8 +56,12 @@ export default function WorkoutPlan() {
             Day {workoutDay} Workout
           </h1>
           <p className="text-gray-600 mt-2">
-            {workoutDay === user.currentDay ? "Today's workout plan" : 
-             workoutDay < user.currentDay ? "Previous workout" : "Upcoming workout"}
+            {(() => {
+              const currentDay = user.currentDay ?? 0;
+              if (workoutDay === currentDay) return "Today's workout plan";
+              if (workoutDay < currentDay) return "Previous workout";
+              return "Upcoming workout";
+            })()}
           </p>
         </div>
 

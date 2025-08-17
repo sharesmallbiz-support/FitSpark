@@ -20,20 +20,24 @@ import VideoPlayer from "@/components/VideoPlayer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertVideoSchema, insertUserSchema } from "@shared/schema";
-import type { Video, User, InsertUser } from "@shared/schema";
+import type { Video, User } from "@shared/schema";
 import { z } from "zod";
 
 const videoFormSchema = insertVideoSchema.extend({
   themeCompatibility: z.array(z.string()).min(1, "Select at least one theme"),
-});
+}).transform(d => ({
+  ...d,
+  isApproved: d.isApproved ? 1 : 0
+}));
 
 type VideoForm = z.infer<typeof videoFormSchema>;
 
 // User form schema for admin user management
 const userFormSchema = insertUserSchema.extend({
   confirmPassword: z.string().optional(),
+  isAdmin: z.boolean().optional()
 }).refine((data) => {
-  if (data.password && data.password !== data.confirmPassword) {
+  if (data.password && data.confirmPassword && data.password !== data.confirmPassword) {
     return false;
   }
   return true;
@@ -80,7 +84,7 @@ export default function Admin() {
       return;
     }
     
-    if (!user?.isAdmin) {
+  if (!user || user.isAdmin !== 1) {
       setLocation("/dashboard");
       return;
     }
@@ -88,12 +92,12 @@ export default function Admin() {
 
   const { data: videos = [], isLoading: videosLoading } = useQuery<Video[]>({
     queryKey: ["/api/videos"],
-    enabled: !!user?.isAdmin,
+    enabled: user?.isAdmin === 1,
   });
 
   const { data: allUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
-    enabled: !!user?.isAdmin,
+    enabled: user?.isAdmin === 1,
   });
 
   const form = useForm<VideoForm>({
@@ -124,21 +128,7 @@ export default function Admin() {
       startWeight: undefined,
       currentWeight: undefined,
       targetWeight: undefined,
-      selectedTheme: "fun",
-      isAdmin: false,
-      fitnessGoals: {
-        primaryGoal: "general-fitness",
-        timeCommitment: 30,
-        fitnessLevel: "beginner",
-        healthConcerns: [],
-        motivationStyle: "fun",
-        preferredActivities: ["chair-yoga"]
-      },
-      preferences: {
-        notifications: true,
-        reminderTime: "09:00",
-        weeklyGoalMinutes: 175
-      }
+      selectedTheme: "fun"
     },
   });
 
@@ -260,7 +250,7 @@ export default function Admin() {
     },
   });
 
-  if (!isAuthenticated || !user?.isAdmin) {
+  if (!isAuthenticated || user?.isAdmin !== 1) {
     return null;
   }
 
@@ -275,7 +265,7 @@ export default function Admin() {
       skillLevel: video.skillLevel,
       effortLevel: video.effortLevel,
       equipment: video.equipment,
-      themeCompatibility: video.themeCompatibility,
+      themeCompatibility: Array.isArray(video.themeCompatibility) ? video.themeCompatibility as any : (typeof video.themeCompatibility === 'string' && video.themeCompatibility.startsWith('[') ? (()=>{ try { return JSON.parse(video.themeCompatibility) } catch { return [] } })() : []),
       description: video.description || "",
       thumbnailUrl: video.thumbnailUrl || "",
     });
@@ -322,21 +312,7 @@ export default function Admin() {
       startWeight: userToEdit.startWeight || undefined,
       currentWeight: userToEdit.currentWeight || undefined,
       targetWeight: userToEdit.targetWeight || undefined,
-      selectedTheme: userToEdit.selectedTheme,
-      isAdmin: userToEdit.isAdmin || false,
-      fitnessGoals: userToEdit.fitnessGoals || {
-        primaryGoal: "general-fitness",
-        timeCommitment: 30,
-        fitnessLevel: "beginner",
-        healthConcerns: [],
-        motivationStyle: "fun",
-        preferredActivities: ["chair-yoga"]
-      },
-      preferences: userToEdit.preferences || {
-        notifications: true,
-        reminderTime: "09:00",
-        weeklyGoalMinutes: 175
-      }
+      selectedTheme: userToEdit.selectedTheme
     });
     setShowUserModal(true);
   };
@@ -352,10 +328,10 @@ export default function Admin() {
   };
 
   const getStats = () => {
-    const approvedVideos = videos.filter((v: Video) => v.isApproved).length;
-    const pendingVideos = videos.filter((v: Video) => !v.isApproved).length;
+  const approvedVideos = videos.filter((v: Video) => v.isApproved === 1).length;
+  const pendingVideos = videos.filter((v: Video) => v.isApproved !== 1).length;
     const totalUsers = allUsers.length;
-    const activeUsers = allUsers.filter((u: User) => u.currentDay > 1).length;
+  const activeUsers = allUsers.filter((u: User) => (u.currentDay || 0) > 1).length;
 
     return { approvedVideos, pendingVideos, totalUsers, activeUsers };
   };
@@ -492,7 +468,7 @@ export default function Admin() {
                                     {video.duration} min • {video.exerciseType} • {video.skillLevel}
                                   </p>
                                   <div className="flex flex-wrap gap-2 mb-2">
-                                    {video.themeCompatibility.map((theme: string) => (
+                                    {(Array.isArray(video.themeCompatibility) ? video.themeCompatibility : [] ).map((theme: string) => (
                                       <Badge key={theme} variant="secondary" className="text-xs">
                                         {theme}
                                       </Badge>
@@ -502,10 +478,10 @@ export default function Admin() {
                                 
                                 <div className="flex items-center space-x-2">
                                   <Badge 
-                                    variant={video.isApproved ? "default" : "secondary"}
+                                    variant={video.isApproved === 1 ? "default" : "secondary"}
                                     data-testid={`video-status-${video.id}`}
                                   >
-                                    {video.isApproved ? "Approved" : "Pending"}
+                                    {video.isApproved === 1 ? "Approved" : "Pending"}
                                   </Badge>
                                 </div>
                               </div>
@@ -521,10 +497,10 @@ export default function Admin() {
                                   Edit
                                 </Button>
                                 
-                                {!video.isApproved ? (
+                {video.isApproved !== 1 ? (
                                   <Button 
                                     size="sm"
-                                    onClick={() => approvalMutation.mutate({ videoId: video.id, approved: true })}
+                  onClick={() => approvalMutation.mutate({ videoId: String(video.id), approved: true })}
                                     disabled={approvalMutation.isPending}
                                     data-testid={`button-approve-${video.id}`}
                                   >
@@ -535,7 +511,7 @@ export default function Admin() {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={() => approvalMutation.mutate({ videoId: video.id, approved: false })}
+                                    onClick={() => approvalMutation.mutate({ videoId: String(video.id), approved: false })}
                                     disabled={approvalMutation.isPending}
                                     data-testid={`button-unapprove-${video.id}`}
                                   >
@@ -547,7 +523,7 @@ export default function Admin() {
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
-                                  onClick={() => deleteMutation.mutate(video.id)}
+                                  onClick={() => deleteMutation.mutate(String(video.id))}
                                   disabled={deleteMutation.isPending}
                                   data-testid={`button-delete-${video.id}`}
                                 >
@@ -589,7 +565,7 @@ export default function Admin() {
                       <CardContent className="p-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-green-600">
-                            {allUsers.filter(u => u.isAdmin).length}
+                            {allUsers.filter(u => u.isAdmin === 1).length}
                           </div>
                           <div className="text-sm text-gray-600">Admins</div>
                         </div>
@@ -599,7 +575,7 @@ export default function Admin() {
                       <CardContent className="p-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-purple-600">
-                            {allUsers.filter(u => u.currentDay > 7).length}
+                            {allUsers.filter(u => (u.currentDay || 0) > 7).length}
                           </div>
                           <div className="text-sm text-gray-600">Active (Week+)</div>
                         </div>
@@ -623,7 +599,7 @@ export default function Admin() {
                         <div key={userItem.id} className="border rounded-lg p-4" data-testid={`user-item-${userItem.id}`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
-                              <div className={`w-12 h-12 ${userItem.isAdmin ? 'bg-red-500' : 'bg-blue-500'} rounded-full flex items-center justify-center`}>
+                              <div className={`w-12 h-12 ${userItem.isAdmin === 1 ? 'bg-red-500' : 'bg-blue-500'} rounded-full flex items-center justify-center`}>
                                 <span className="text-white font-semibold">
                                   {userItem.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                                 </span>
@@ -637,11 +613,8 @@ export default function Admin() {
                                   <span>Day {userItem.currentDay}/30</span>
                                   <span>•</span>
                                   <span className="capitalize">{userItem.selectedTheme} theme</span>
-                                  {userItem.fitnessGoals && (
-                                    <>
-                                      <span>•</span>
-                                      <span className="capitalize">{userItem.fitnessGoals.primaryGoal.replace('-', ' ')}</span>
-                                    </>
+                                  {userItem.fitnessGoals && typeof userItem.fitnessGoals === 'string' && (()=>{ try { const fg = JSON.parse(userItem.fitnessGoals); return fg?.primaryGoal; } catch { return null } })() && (
+                                    (()=>{ try { const fg = JSON.parse(userItem.fitnessGoals as any); return (<><span>•</span><span className="capitalize">{fg.primaryGoal.replace('-', ' ')}</span></>); } catch { return null } })()
                                   )}
                                 </div>
                               </div>
@@ -649,11 +622,11 @@ export default function Admin() {
                             
                             <div className="flex items-center space-x-4">
                               <div className="text-right">
-                                <Badge variant={userItem.isAdmin ? "default" : "secondary"}>
-                                  {userItem.isAdmin ? "Admin" : "User"}
+                                <Badge variant={userItem.isAdmin === 1 ? "default" : "secondary"}>
+                                  {userItem.isAdmin === 1 ? "Admin" : "User"}
                                 </Badge>
                                 <p className="text-sm text-gray-500 mt-1">
-                                  Started: {userItem.startDate ? new Date(userItem.startDate).toLocaleDateString() : 'N/A'}
+                                  Started: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}
                                 </p>
                               </div>
                               
@@ -670,7 +643,7 @@ export default function Admin() {
                                 <Button
                                   variant="destructive"
                                   size="sm"
-                                  onClick={() => deleteUserMutation.mutate(userItem.id)}
+                                  onClick={() => deleteUserMutation.mutate(String(userItem.id))}
                                   disabled={deleteUserMutation.isPending || userItem.id === user?.id}
                                   data-testid={`button-delete-user-${userItem.id}`}
                                 >
@@ -810,7 +783,7 @@ export default function Admin() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Exercise Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-exercise-type">
                             <SelectValue />
@@ -834,7 +807,7 @@ export default function Admin() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Skill Level</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-skill-level">
                             <SelectValue />
@@ -1204,7 +1177,7 @@ export default function Admin() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Coaching Theme</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-theme">
                             <SelectValue placeholder="Select theme" />

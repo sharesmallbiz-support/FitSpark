@@ -357,7 +357,7 @@ export default function Progress() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500">
-                          {new Date(achievement.earnedAt).toLocaleDateString()}
+                          {achievement.earnedAt ? new Date(achievement.earnedAt).toLocaleDateString() : "—"}
                         </p>
                       </div>
                     </div>

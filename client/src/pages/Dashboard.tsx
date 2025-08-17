@@ -22,7 +22,10 @@ export default function Dashboard() {
     }
     
     if (user?.selectedTheme) {
-      setTheme(user.selectedTheme);
+      const possible = user.selectedTheme as any;
+      if (possible === "fun" || possible === "aggressive" || possible === "drill") {
+        setTheme(possible);
+      }
     }
   }, [isAuthenticated, user, setTheme, setLocation]);
 

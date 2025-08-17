@@ -11,7 +11,8 @@ export default function DailyMotivation({ user, motivation }: DailyMotivationPro
   
   const getStreakCount = () => {
     // This would be calculated from actual progress data
-    return Math.min(user.currentDay - 1, 12);
+  const currentDay = user.currentDay ?? 1;
+  return Math.min(currentDay - 1, 12);
   };
 
   const getWeeklyGoal = () => {
@@ -47,7 +48,7 @@ export default function DailyMotivation({ user, motivation }: DailyMotivationPro
           <div className="hidden lg:block">
             <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-3xl font-bold" data-testid="text-current-day">
-                {user.currentDay}
+                {user.currentDay ?? 1}
               </span>
             </div>
           </div>

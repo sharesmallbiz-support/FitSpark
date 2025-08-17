@@ -1,15 +1,38 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import initSqlJs, { Database as SqlJsDatabase } from "sql.js";
+import { drizzle } from "drizzle-orm/sql-js";
 import * as schema from "@shared/schema";
+import fs from "fs";
+import path from "path";
 
-neonConfig.webSocketConstructor = ws;
+// ESM-compatible __dirname
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const dbFilePath = path.resolve(__dirname, "../data/database.db");
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+async function loadDatabase(): Promise<SqlJsDatabase> {
+  const SQL = await initSqlJs();
+  let db: SqlJsDatabase;
+  if (fs.existsSync(dbFilePath)) {
+    const fileBuffer = fs.readFileSync(dbFilePath);
+    db = new SQL.Database(fileBuffer);
+  } else {
+    db = new SQL.Database();
+  }
+  return db;
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+// Export a db object for compatibility with code expecting a direct db export
+let db: ReturnType<typeof drizzle> | undefined;
+export const dbPromise = loadDatabase().then((sqlite) => {
+  db = drizzle(sqlite, { schema });
+  return db;
+});
+export { db };
+
+export async function saveDatabase(sqlite: SqlJsDatabase) {
+  const data = sqlite.export();
+  // Buffer.from is available in Node.js, but if not, use Uint8Array directly
+  fs.writeFileSync(
+    dbFilePath,
+    Buffer.from ? Buffer.from(data) : new Uint8Array(data)
+  );
+}

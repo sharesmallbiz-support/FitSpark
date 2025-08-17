@@ -7,6 +7,8 @@ import WorkoutModal from "@/components/WorkoutModal";
 import WeightLogModal from "@/components/WeightLogModal";
 import type { WorkoutPlan, User } from "@shared/schema";
 
+interface PlanExercise { name: string; duration: number; videoId?: string; instructions?: string }
+
 interface TodaysWorkoutProps {
   workout?: WorkoutPlan;
   user: User;
@@ -33,7 +35,12 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
     );
   }
 
-  const primaryVideoId = workout.exercises.find(e => e.videoId)?.videoId;
+  const exercises: PlanExercise[] = Array.isArray(workout.exercises)
+    ? (workout.exercises as any)
+    : typeof workout.exercises === 'string' && workout.exercises.trim().startsWith('[')
+      ? (() => { try { return JSON.parse(workout.exercises) } catch { return [] } })()
+      : [];
+  const primaryVideoId = exercises.find(e => e.videoId)?.videoId;
 
   return (
     <>
@@ -69,7 +76,7 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
 
             {/* Exercise List */}
             <div className="space-y-3">
-              {workout.exercises.map((exercise, index) => (
+              {exercises.map((exercise, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                      data-testid={`exercise-item-${index}`}>
                   <div className="flex items-center">
@@ -185,7 +192,7 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
       <WorkoutModal 
         isOpen={showWorkoutModal}
         onClose={() => setShowWorkoutModal(false)}
-        workout={workout}
+        workout={{ ...workout, exercises: JSON.stringify(exercises) as any }}
         user={user}
       />
 
