@@ -17,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import Navigation from "@/components/Navigation";
 import VideoPlayer from "@/components/VideoPlayer";
+import ExerciseCatalog from "@/components/ExerciseCatalog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertVideoSchema, insertUserSchema, User } from "@/types/client";
@@ -423,8 +424,9 @@ export default function Admin() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="videos" data-testid="tab-videos">Video Management</TabsTrigger>
+              <TabsTrigger value="exercises" data-testid="tab-exercises">Exercise Catalog</TabsTrigger>
               <TabsTrigger value="users" data-testid="tab-users">User Management</TabsTrigger>
             </TabsList>
 
@@ -537,6 +539,10 @@ export default function Admin() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="exercises" className="space-y-6">
+              <ExerciseCatalog />
             </TabsContent>
 
             <TabsContent value="users" className="space-y-6">

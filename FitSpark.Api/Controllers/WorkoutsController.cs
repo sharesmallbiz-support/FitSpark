@@ -145,4 +145,75 @@ public class WorkoutsController : ControllerBase
         return CreatedAtAction(nameof(GetExercisesForWorkout),
             new { dailyWorkoutId = exercise.DailyWorkoutId, userId = userId }, exercise);
     }
+
+    [HttpGet("exercises")]
+    public async Task<ActionResult<IEnumerable<ExerciseDto>>> GetAllExercises(
+        [FromQuery] string? category = null,
+        [FromQuery] string? difficultyLevel = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var exercises = await _workoutService.GetAllExercisesAsync(category, difficultyLevel, page, pageSize);
+        return Ok(exercises);
+    }
+
+    [HttpGet("exercises/{exerciseId}")]
+    public async Task<ActionResult<ExerciseDto>> GetExercise(int exerciseId)
+    {
+        var exercise = await _workoutService.GetExerciseAsync(exerciseId);
+        if (exercise == null)
+        {
+            return NotFound(new { message = "Exercise not found" });
+        }
+
+        return Ok(exercise);
+    }
+
+    [HttpPut("exercises/{exerciseId}/user/{userId}")]
+    public async Task<ActionResult<ExerciseDto>> UpdateExercise(int exerciseId, int userId, [FromBody] UpdateExerciseDto updateDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var exercise = await _workoutService.UpdateExerciseAsync(exerciseId, updateDto, userId);
+        if (exercise == null)
+        {
+            return NotFound(new { message = "Exercise not found" });
+        }
+
+        return Ok(exercise);
+    }
+
+    [HttpDelete("exercises/{exerciseId}/user/{userId}")]
+    public async Task<ActionResult> DeleteExercise(int exerciseId, int userId)
+    {
+        var success = await _workoutService.DeleteExerciseAsync(exerciseId, userId);
+        if (!success)
+        {
+            return NotFound(new { message = "Exercise not found" });
+        }
+
+        return NoContent();
+    }
+
+    [HttpPost("exercises/bulk")]
+    public async Task<ActionResult<IEnumerable<ExerciseDto>>> CreateBulkExercises([FromBody] IEnumerable<CreateStandaloneExerciseDto> createDtos)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var exercises = await _workoutService.CreateBulkExercisesAsync(createDtos);
+        return Ok(exercises);
+    }
+
+    [HttpGet("exercises/categories")]
+    public async Task<ActionResult<IEnumerable<string>>> GetExerciseCategories()
+    {
+        var categories = await _workoutService.GetExerciseCategoriesAsync();
+        return Ok(categories);
+    }
 }

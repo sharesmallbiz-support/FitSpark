@@ -101,7 +101,7 @@ export interface DailyWorkout {
 
 export interface Exercise {
   id: number;
-  dailyWorkoutId: number;
+  dailyWorkoutId?: number;
   name: string;
   description?: string;
   category: string;
@@ -114,8 +114,11 @@ export interface Exercise {
   videoTitle?: string;
   instructions?: string;
   difficultyLevel: string;
+  safetyNotes?: string;
+  benefits?: string;
   displayOrder: number;
   isRequired: boolean;
+  isTemplate: boolean;
   createdAt: string;
 }
 

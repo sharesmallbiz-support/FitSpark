@@ -17,6 +17,14 @@ public interface IWorkoutService
     Task<DailyWorkoutDto?> CreateDailyWorkoutAsync(CreateDailyWorkoutDto createDto, int userId);
     Task<ExerciseDto?> CreateExerciseAsync(CreateExerciseDto createDto, int userId);
     Task<IEnumerable<ExerciseDto>> GetExercisesForWorkoutAsync(int dailyWorkoutId, int userId);
+
+    // New exercise management methods
+    Task<IEnumerable<ExerciseDto>> GetAllExercisesAsync(string? category = null, string? difficultyLevel = null, int page = 1, int pageSize = 50);
+    Task<ExerciseDto?> GetExerciseAsync(int exerciseId);
+    Task<ExerciseDto?> UpdateExerciseAsync(int exerciseId, UpdateExerciseDto updateDto, int userId);
+    Task<bool> DeleteExerciseAsync(int exerciseId, int userId);
+    Task<IEnumerable<ExerciseDto>> CreateBulkExercisesAsync(IEnumerable<CreateStandaloneExerciseDto> createDtos);
+    Task<IEnumerable<string>> GetExerciseCategoriesAsync();
 }
 
 public class WorkoutService : IWorkoutService
@@ -221,6 +229,7 @@ public class WorkoutService : IWorkoutService
             DifficultyLevel = createDto.DifficultyLevel,
             DisplayOrder = createDto.DisplayOrder,
             IsRequired = createDto.IsRequired,
+            IsTemplate = false,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -233,11 +242,191 @@ public class WorkoutService : IWorkoutService
     public async Task<IEnumerable<ExerciseDto>> GetExercisesForWorkoutAsync(int dailyWorkoutId, int userId)
     {
         var exercises = await _context.Exercises
-            .Where(e => e.DailyWorkoutId == dailyWorkoutId && e.DailyWorkout.WorkoutPlan.UserId == userId)
+            .Where(e => e.DailyWorkoutId == dailyWorkoutId && e.DailyWorkout!.WorkoutPlan.UserId == userId)
             .OrderBy(e => e.DisplayOrder)
             .ToListAsync();
 
         return exercises.Select(MapToExerciseDto);
+    }
+
+    public async Task<IEnumerable<ExerciseDto>> GetAllExercisesAsync(string? category = null, string? difficultyLevel = null, int page = 1, int pageSize = 50)
+    {
+        var query = _context.Exercises.AsQueryable();
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(e => e.Category == category);
+        }
+
+        if (!string.IsNullOrEmpty(difficultyLevel))
+        {
+            query = query.Where(e => e.DifficultyLevel == difficultyLevel);
+        }
+
+        var exercises = await query
+            .OrderBy(e => e.Category)
+            .ThenBy(e => e.DisplayOrder)
+            .ThenBy(e => e.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return exercises.Select(MapToExerciseDto);
+    }
+
+    public async Task<ExerciseDto?> GetExerciseAsync(int exerciseId)
+    {
+        var exercise = await _context.Exercises
+            .FirstOrDefaultAsync(e => e.Id == exerciseId);
+
+        return exercise != null ? MapToExerciseDto(exercise) : null;
+    }
+
+    public async Task<ExerciseDto?> UpdateExerciseAsync(int exerciseId, UpdateExerciseDto updateDto, int userId)
+    {
+        var exercise = await _context.Exercises
+            .Include(e => e.DailyWorkout)
+            .ThenInclude(dw => dw!.WorkoutPlan)
+            .FirstOrDefaultAsync(e => e.Id == exerciseId);
+
+        if (exercise == null)
+        {
+            return null;
+        }
+
+        // Check if user has permission to update this exercise
+        if (exercise.DailyWorkout != null && exercise.DailyWorkout.WorkoutPlan.UserId != userId && !exercise.IsTemplate)
+        {
+            return null;
+        }
+
+        // Update only provided fields
+        if (!string.IsNullOrWhiteSpace(updateDto.Name))
+        {
+            exercise.Name = updateDto.Name;
+        }
+        if (updateDto.Description != null)
+        {
+            exercise.Description = updateDto.Description;
+        }
+        if (!string.IsNullOrWhiteSpace(updateDto.Category))
+        {
+            exercise.Category = updateDto.Category;
+        }
+        if (updateDto.Sets.HasValue)
+        {
+            exercise.Sets = updateDto.Sets;
+        }
+        if (updateDto.Reps.HasValue)
+        {
+            exercise.Reps = updateDto.Reps;
+        }
+        if (updateDto.DurationMinutes.HasValue)
+        {
+            exercise.DurationMinutes = updateDto.DurationMinutes;
+        }
+        if (updateDto.WeightPounds.HasValue)
+        {
+            exercise.WeightPounds = updateDto.WeightPounds;
+        }
+        if (updateDto.DistanceMiles.HasValue)
+        {
+            exercise.DistanceMiles = updateDto.DistanceMiles;
+        }
+        if (updateDto.VideoUrl != null)
+        {
+            exercise.VideoUrl = updateDto.VideoUrl;
+        }
+        if (updateDto.VideoTitle != null)
+        {
+            exercise.VideoTitle = updateDto.VideoTitle;
+        }
+        if (updateDto.Instructions != null)
+        {
+            exercise.Instructions = updateDto.Instructions;
+        }
+        if (!string.IsNullOrWhiteSpace(updateDto.DifficultyLevel))
+        {
+            exercise.DifficultyLevel = updateDto.DifficultyLevel;
+        }
+        if (updateDto.DisplayOrder.HasValue)
+        {
+            exercise.DisplayOrder = updateDto.DisplayOrder.Value;
+        }
+        if (updateDto.IsRequired.HasValue)
+        {
+            exercise.IsRequired = updateDto.IsRequired.Value;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return MapToExerciseDto(exercise);
+    }
+
+    public async Task<bool> DeleteExerciseAsync(int exerciseId, int userId)
+    {
+        var exercise = await _context.Exercises
+            .Include(e => e.DailyWorkout)
+            .ThenInclude(dw => dw!.WorkoutPlan)
+            .FirstOrDefaultAsync(e => e.Id == exerciseId);
+
+        if (exercise == null)
+        {
+            return false;
+        }
+
+        // Check if user has permission to delete this exercise
+        if (exercise.DailyWorkout != null && exercise.DailyWorkout.WorkoutPlan.UserId != userId && !exercise.IsTemplate)
+        {
+            return false;
+        }
+
+        _context.Exercises.Remove(exercise);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<IEnumerable<ExerciseDto>> CreateBulkExercisesAsync(IEnumerable<CreateStandaloneExerciseDto> createDtos)
+    {
+        var exercises = createDtos.Select(dto => new Exercise
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            Category = dto.Category,
+            Sets = dto.Sets,
+            Reps = dto.Reps,
+            DurationMinutes = dto.DurationMinutes,
+            WeightPounds = dto.WeightPounds,
+            DistanceMiles = dto.DistanceMiles,
+            VideoUrl = dto.VideoUrl,
+            VideoTitle = dto.VideoTitle,
+            Instructions = dto.Instructions,
+            DifficultyLevel = dto.DifficultyLevel,
+            SafetyNotes = dto.SafetyNotes,
+            Benefits = dto.Benefits,
+            DisplayOrder = dto.DisplayOrder,
+            IsRequired = dto.IsRequired,
+            IsTemplate = true, // These are template exercises for the catalog
+            CreatedAt = DateTime.UtcNow
+        }).ToList();
+
+        _context.Exercises.AddRange(exercises);
+        await _context.SaveChangesAsync();
+
+        return exercises.Select(MapToExerciseDto);
+    }
+
+    public async Task<IEnumerable<string>> GetExerciseCategoriesAsync()
+    {
+        var categories = await _context.Exercises
+            .Where(e => !string.IsNullOrEmpty(e.Category))
+            .Select(e => e.Category)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
+
+        return categories;
     }
 
     private static WorkoutPlanDto MapToWorkoutPlanDto(WorkoutPlan plan)
@@ -295,8 +484,11 @@ public class WorkoutService : IWorkoutService
             VideoTitle = exercise.VideoTitle,
             Instructions = exercise.Instructions,
             DifficultyLevel = exercise.DifficultyLevel,
+            SafetyNotes = exercise.SafetyNotes,
+            Benefits = exercise.Benefits,
             DisplayOrder = exercise.DisplayOrder,
             IsRequired = exercise.IsRequired,
+            IsTemplate = exercise.IsTemplate,
             CreatedAt = exercise.CreatedAt
         };
     }

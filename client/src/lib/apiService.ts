@@ -5,6 +5,8 @@ import {
   buildVideoQuery,
   buildProgressQuery,
   buildLeaderboardQuery,
+  buildExerciseCatalogQuery,
+  buildAllExercisesQuery,
 } from "./apiConfig";
 import type {
   ApiUser,
@@ -12,6 +14,7 @@ import type {
   RegisterRequest,
   WorkoutPlan,
   DailyWorkout,
+  Exercise,
   DailyProgress,
   Video,
   Achievement,
@@ -112,6 +115,53 @@ export const workoutService = {
     const response = await apiRequest(
       "GET",
       API_ENDPOINTS.workouts.getDailyWorkoutsForPlan(planId, userId)
+    );
+    return response.json();
+  },
+
+  async getAllExercises(params?: {
+    category?: string;
+    difficultyLevel?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<Exercise[]> {
+    const url = buildAllExercisesQuery(params || {});
+    const response = await apiRequest("GET", url);
+    return response.json();
+  },
+
+  async getExercise(exerciseId: number): Promise<Exercise> {
+    const response = await apiRequest(
+      "GET",
+      API_ENDPOINTS.workouts.getExercise(exerciseId)
+    );
+    return response.json();
+  },
+
+  async updateExercise(
+    exerciseId: number,
+    userId: number,
+    updates: any
+  ): Promise<Exercise> {
+    const response = await apiRequest(
+      "PUT",
+      API_ENDPOINTS.workouts.updateExercise(exerciseId, userId),
+      updates
+    );
+    return response.json();
+  },
+
+  async deleteExercise(exerciseId: number, userId: number): Promise<void> {
+    await apiRequest(
+      "DELETE",
+      API_ENDPOINTS.workouts.deleteExercise(exerciseId, userId)
+    );
+  },
+
+  async getExerciseCategories(): Promise<string[]> {
+    const response = await apiRequest(
+      "GET",
+      API_ENDPOINTS.workouts.getExerciseCategories
     );
     return response.json();
   },
@@ -252,6 +302,80 @@ export const achievementService = {
     const response = await apiRequest(
       "GET",
       API_ENDPOINTS.achievements.getCategories
+    );
+    return response.json();
+  },
+};
+
+// Exercise Catalog Services
+export const exerciseCatalogService = {
+  async getCatalogExercises(params?: {
+    category?: string;
+    difficultyLevel?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<Exercise[]> {
+    const url = buildExerciseCatalogQuery(params || {});
+    const response = await apiRequest("GET", url);
+    return response.json();
+  },
+
+  async getCatalogExercise(exerciseId: number): Promise<Exercise> {
+    const response = await apiRequest(
+      "GET",
+      API_ENDPOINTS.exerciseCatalog.getCatalogExercise(exerciseId)
+    );
+    return response.json();
+  },
+
+  async updateCatalogExercise(
+    exerciseId: number,
+    updates: any
+  ): Promise<Exercise> {
+    const response = await apiRequest(
+      "PUT",
+      API_ENDPOINTS.exerciseCatalog.updateCatalogExercise(exerciseId),
+      updates
+    );
+    return response.json();
+  },
+
+  async createCatalogExercise(exerciseData: any): Promise<Exercise> {
+    const response = await apiRequest(
+      "POST",
+      API_ENDPOINTS.exerciseCatalog.createCatalogExercise,
+      exerciseData
+    );
+    return response.json();
+  },
+
+  async deleteCatalogExercise(exerciseId: number): Promise<void> {
+    await apiRequest(
+      "DELETE",
+      API_ENDPOINTS.exerciseCatalog.deleteCatalogExercise(exerciseId)
+    );
+  },
+
+  async getCategories(): Promise<string[]> {
+    const response = await apiRequest(
+      "GET",
+      API_ENDPOINTS.exerciseCatalog.getCategories
+    );
+    return response.json();
+  },
+
+  async reloadChairExercises(): Promise<any> {
+    const response = await apiRequest(
+      "POST",
+      API_ENDPOINTS.exerciseCatalog.reloadChairExercises
+    );
+    return response.json();
+  },
+
+  async getCatalogStatus(): Promise<any> {
+    const response = await apiRequest(
+      "GET",
+      API_ENDPOINTS.exerciseCatalog.getCatalogStatus
     );
     return response.json();
   },

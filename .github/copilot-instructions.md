@@ -213,34 +213,57 @@ dotnet ef database update --project FitSpark.Api
 ### Package Scripts
 
 ```bash
-npm run dev              # Vite dev server with API proxy
-npm run build           # Build client to API wwwroot
+npm run dev              # Vite dev server with API proxy (development only)
+npm run build           # Build client to API wwwroot (unified deployment)
 npm run build:api       # Build .NET API only
 npm run build:all       # Build both client and API
 npm run build:production # Production build
-npm run start:api       # Run unified application
 npm run clean           # Clean build outputs
 npm run restore         # Restore all dependencies
 npm run check           # TypeScript type checking
 ```
 
+### Unified Build Script
+
+```powershell
+# Recommended way to build and test the complete application
+.\build-and-serve.ps1   # Builds client and starts unified server
+```
+
 ## Build & Deployment
 
-```bash
-# Start full application (recommended)
-dotnet run --project FitSpark.Api/FitSpark.Api.csproj
+### Unified Deployment (Recommended)
 
-# Client-only development with hot reload
+The application uses a unified deployment model where both the React client and .NET API are served from a single server:
+
+```powershell
+# Preferred way to build and test the complete application
+.\build-and-serve.ps1
+```
+
+This script will:
+
+1. Build the React client to `FitSpark.Api/wwwroot/`
+2. Start the .NET API server
+3. Serve both API endpoints and client app on `http://localhost:5155`
+
+### Alternative Development Options
+
+```bash
+# Client-only development with hot reload (development only)
 npm run dev  # Proxies to API at localhost:5155
+
+# Manual API start (if not using build-and-serve.ps1)
+dotnet run --project FitSpark.Api/FitSpark.Api.csproj
 ```
 
 ### Build Commands
 
 ```bash
-npm run build:client    # Builds React app to FitSpark.Api/wwwroot
-npm run build:api       # Builds .NET API
-npm run build:all       # Builds both client and API
-npm run start:api       # Builds and runs unified application
+npm run build           # Build client to API wwwroot (unified deployment)
+npm run build:api       # Build .NET API only
+npm run build:all       # Build both client and API
+npm run build:production # Production build
 ```
 
 ### Production Deployment
@@ -342,7 +365,7 @@ The application supports dynamic theming with three modes:
 
 ### Documentation Organization
 
-- All documentation files (except README.md) are organized in the `/copilot` folder
+- All documentation files (except /README.md and /.github/copilot-instructions.md ) are organized in the `/copilot` folder
 - Keep instructions and integration summaries easily discoverable
 - Follow consistent markdown formatting and structure
 
@@ -425,5 +448,29 @@ The application uses a unified deployment model:
 - Single origin eliminates CORS complexity
 - SPA routing handled by fallback to index.html
 - Production and development use same architecture
+
+### Testing & Development Workflow
+
+**Preferred Method:**
+
+```powershell
+# Use the unified build and serve script
+.\build-and-serve.ps1
+```
+
+This approach:
+
+- Builds the React client into the API's wwwroot folder
+- Starts the .NET API server on `http://localhost:5155`
+- Serves both the client app and API endpoints from the same origin
+- Eliminates CORS issues and provides a production-like environment
+- Automatically loads the exercise catalog and sample data
+
+**Alternative for Frontend Development:**
+
+```bash
+# For rapid frontend iteration only
+npm run dev  # Runs Vite dev server with API proxy
+```
 
 This comprehensive guide should help GitHub Copilot understand the project structure, coding patterns, and best practices to provide relevant and accurate code suggestions.

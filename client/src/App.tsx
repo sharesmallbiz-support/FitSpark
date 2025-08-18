@@ -14,6 +14,7 @@ import WorkoutPlans from "@/pages/WorkoutPlans";
 import Progress from "@/pages/Progress";
 import Admin from "@/pages/Admin";
 import UserProfile from "@/pages/UserProfile";
+import ExerciseCatalog from "@/pages/ExerciseCatalog";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/workout-plans" component={WorkoutPlans} />
       <Route path="/progress" component={Progress} />
       <Route path="/profile" component={UserProfile} />
+      <Route path="/exercise-catalog" component={ExerciseCatalog} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>

@@ -17,6 +17,7 @@ builder.Services.AddDbContext<FitSparkDbContext>(options =>
 // Register services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWorkoutService, WorkoutService>();
+builder.Services.AddScoped<IExerciseCatalogService, ExerciseCatalogService>();
 builder.Services.AddScoped<DataSeedingService>();
 
 // Add CORS
@@ -70,11 +71,13 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FitSparkDbContext>();
     var seedingService = scope.ServiceProvider.GetRequiredService<DataSeedingService>();
+    var exerciseCatalogService = scope.ServiceProvider.GetRequiredService<IExerciseCatalogService>();
 
     try
     {
         await context.Database.EnsureCreatedAsync();
         await seedingService.SeedDataAsync();
+        await exerciseCatalogService.LoadChairExercisesAsync();
     }
     catch (Exception ex)
     {

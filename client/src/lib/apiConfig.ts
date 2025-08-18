@@ -25,6 +25,30 @@ export const API_ENDPOINTS = {
       `/api/workouts/exercises/workout/${dailyWorkoutId}/user/${userId}`,
     createExercise: (userId: number) =>
       `/api/workouts/exercises/user/${userId}`,
+    getAllExercises: "/api/workouts/exercises",
+    getExercise: (exerciseId: number) =>
+      `/api/workouts/exercises/${exerciseId}`,
+    updateExercise: (exerciseId: number, userId: number) =>
+      `/api/workouts/exercises/${exerciseId}/user/${userId}`,
+    deleteExercise: (exerciseId: number, userId: number) =>
+      `/api/workouts/exercises/${exerciseId}/user/${userId}`,
+    createBulkExercises: "/api/workouts/exercises/bulk",
+    getExerciseCategories: "/api/workouts/exercises/categories",
+  },
+
+  // Exercise Catalog
+  exerciseCatalog: {
+    getCatalogExercises: "/api/exercisecatalog",
+    getCatalogExercise: (exerciseId: number) =>
+      `/api/exercisecatalog/${exerciseId}`,
+    updateCatalogExercise: (exerciseId: number) =>
+      `/api/exercisecatalog/${exerciseId}`,
+    createCatalogExercise: "/api/exercisecatalog",
+    deleteCatalogExercise: (exerciseId: number) =>
+      `/api/exercisecatalog/${exerciseId}`,
+    getCategories: "/api/exercisecatalog/categories",
+    reloadChairExercises: "/api/exercisecatalog/reload",
+    getCatalogStatus: "/api/exercisecatalog/status",
   },
 
   // Progress
@@ -70,7 +94,10 @@ export function buildUrl(
 
   const url = new URL(endpoint, window.location.origin);
   Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
+    // Only add the parameter if the value is not undefined, null, or empty string
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.append(key, String(value));
+    }
   });
 
   return url.pathname + url.search;
@@ -95,3 +122,17 @@ export const buildProgressQuery = (
 
 export const buildLeaderboardQuery = (params: { limit?: number }) =>
   buildUrl(API_ENDPOINTS.achievements.getLeaderboard, params);
+
+export const buildExerciseCatalogQuery = (params: {
+  category?: string;
+  difficultyLevel?: string;
+  page?: number;
+  pageSize?: number;
+}) => buildUrl(API_ENDPOINTS.exerciseCatalog.getCatalogExercises, params);
+
+export const buildAllExercisesQuery = (params: {
+  category?: string;
+  difficultyLevel?: string;
+  page?: number;
+  pageSize?: number;
+}) => buildUrl(API_ENDPOINTS.workouts.getAllExercises, params);

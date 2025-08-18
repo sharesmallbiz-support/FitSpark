@@ -63,7 +63,8 @@ public class FitSparkDbContext : DbContext
             entity.HasOne(e => e.DailyWorkout)
                   .WithMany(e => e.Exercises)
                   .HasForeignKey(e => e.DailyWorkoutId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .IsRequired(false);
             entity.Property(e => e.WeightPounds).HasPrecision(5, 2);
             entity.Property(e => e.DistanceMiles).HasPrecision(5, 2);
         });

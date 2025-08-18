@@ -6,7 +6,7 @@ public class Exercise
 {
     public int Id { get; set; }
 
-    public int DailyWorkoutId { get; set; }
+    public int? DailyWorkoutId { get; set; }
 
     [Required]
     [StringLength(100)]
@@ -45,12 +45,20 @@ public class Exercise
     [StringLength(20)]
     public string DifficultyLevel { get; set; } = "Beginner";
 
+    [StringLength(500)]
+    public string? SafetyNotes { get; set; }
+
+    [StringLength(500)]
+    public string? Benefits { get; set; }
+
     public int DisplayOrder { get; set; }
 
     public bool IsRequired { get; set; } = true;
 
+    public bool IsTemplate { get; set; } = false; // True for exercise catalog, false for workout-specific
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public virtual DailyWorkout DailyWorkout { get; set; } = null!;
+    public virtual DailyWorkout? DailyWorkout { get; set; }
 }

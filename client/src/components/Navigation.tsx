@@ -25,7 +25,10 @@ export default function Navigation() {
   ];
 
   if (user.role === 'Admin') {
-    navItems.push({ path: "/admin", label: "Admin", icon: "fas fa-cog" });
+    navItems.push(
+      { path: "/exercise-catalog", label: "Exercise Catalog", icon: "fas fa-book" },
+      { path: "/admin", label: "Admin", icon: "fas fa-cog" }
+    );
   }
 
   return (
