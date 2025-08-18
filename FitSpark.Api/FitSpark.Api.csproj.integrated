@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Define the client project path -->
+    <ClientProjectPath>..\</ClientProjectPath>
+    <ClientBuildOutputPath>wwwroot</ClientBuildOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.8" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
+  </ItemGroup>
+
+  <!-- Include client source files to trigger rebuild when they change -->
+  <ItemGroup>
+    <SourceFiles Include="$(ClientProjectPath)client\src\**\*" />
+    <SourceFiles Include="$(ClientProjectPath)package.json" />
+    <SourceFiles Include="$(ClientProjectPath)vite.config.ts" />
+  </ItemGroup>
+
+  <!-- Build targets for client application -->
+  <Target Name="BuildClient" BeforeTargets="Build" Inputs="@(SourceFiles)" Outputs="$(ClientBuildOutputPath)\index.html">
+    <Message Text="Building React client..." Importance="high" />
+    
+    <!-- Check if npm is available -->
+    <Exec Command="npm --version" ContinueOnError="true" IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="NpmExitCode" />
+    </Exec>
+    
+    <Error Text="npm is not available. Please install Node.js." Condition="$(NpmExitCode) != 0" />
+    
+    <!-- Install dependencies if node_modules doesn't exist -->
+    <Exec Command="npm ci" 
+          WorkingDirectory="$(ClientProjectPath)" 
+          Condition="!Exists('$(ClientProjectPath)node_modules')" />
+    
+    <!-- Build the client -->
+    <Exec Command="npm run build" 
+          WorkingDirectory="$(ClientProjectPath)" />
+  </Target>
+
+  <!-- Clean client build output -->
+  <Target Name="CleanClient" BeforeTargets="Clean">
+    <RemoveDir Directories="$(ClientBuildOutputPath)" Condition="Exists('$(ClientBuildOutputPath)')" />
+  </Target>
+
+  <!-- Restore client dependencies -->
+  <Target Name="RestoreClient" BeforeTargets="Restore">
+    <Message Text="Restoring npm packages..." Importance="high" />
+    <Exec Command="npm ci" 
+          WorkingDirectory="$(ClientProjectPath)" 
+          Condition="Exists('$(ClientProjectPath)package.json')" />
+  </Target>
+
+</Project>

@@ -1,8 +1,8 @@
-import type { User } from "@shared/schema";
+import type { ApiUser } from "@/types/api";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface DailyMotivationProps {
-  user: User;
+  user: ApiUser;
   motivation?: string;
 }
 
@@ -11,8 +11,8 @@ export default function DailyMotivation({ user, motivation }: DailyMotivationPro
   
   const getStreakCount = () => {
     // This would be calculated from actual progress data
-  const currentDay = user.currentDay ?? 1;
-  return Math.min(currentDay - 1, 12);
+    // Since ApiUser doesn't have currentDay, we'll default to 1
+    return Math.min(1, 12);
   };
 
   const getWeeklyGoal = () => {
@@ -27,7 +27,7 @@ export default function DailyMotivation({ user, motivation }: DailyMotivationPro
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold mb-2" data-testid="text-welcome-message">
-              Great to see you back, {user.name}! {themeConfig.icon}
+              Great to see you back, {user.firstName || user.username}! {themeConfig.icon}
             </h2>
             <p className="text-lg opacity-90" data-testid="text-motivation-message">
               {motivation || "Every workout is a victory. You're building strength one day at a time!"}
@@ -48,7 +48,7 @@ export default function DailyMotivation({ user, motivation }: DailyMotivationPro
           <div className="hidden lg:block">
             <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-3xl font-bold" data-testid="text-current-day">
-                {user.currentDay ?? 1}
+                1
               </span>
             </div>
           </div>

@@ -5,13 +5,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import VideoPlayer from "@/components/VideoPlayer";
 import WorkoutModal from "@/components/WorkoutModal";
 import WeightLogModal from "@/components/WeightLogModal";
-import type { WorkoutPlan, User } from "@shared/schema";
+import type { WorkoutPlan } from "@/types/api";
+import type { ApiUser } from "@/types/api";
 
 interface PlanExercise { name: string; duration: number; videoId?: string; instructions?: string }
 
 interface TodaysWorkoutProps {
   workout?: WorkoutPlan;
-  user: User;
+  user: ApiUser;
 }
 
 export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
@@ -35,12 +36,11 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
     );
   }
 
-  const exercises: PlanExercise[] = Array.isArray(workout.exercises)
-    ? (workout.exercises as any)
-    : typeof workout.exercises === 'string' && workout.exercises.trim().startsWith('[')
-      ? (() => { try { return JSON.parse(workout.exercises) } catch { return [] } })()
-      : [];
-  const primaryVideoId = exercises.find(e => e.videoId)?.videoId;
+  // Use daily workouts from the API structure
+  const currentDayWorkout = workout?.dailyWorkouts?.[0]; // Get first daily workout for now
+  const exercises = currentDayWorkout?.exercises || [];
+  const primaryVideoId = exercises.find(e => e.videoUrl)?.videoUrl?.includes('youtube') ? 
+    exercises.find(e => e.videoUrl)?.videoUrl?.split('v=')[1]?.split('&')[0] : null;
 
   return (
     <>
@@ -55,11 +55,11 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
           <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-xl font-semibold" data-testid="text-workout-title">
-                {workout.title}
+                {currentDayWorkout?.title || workout?.name}
               </h4>
               <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full" 
                     data-testid="text-workout-duration">
-                {workout.totalMinutes} mins
+                {currentDayWorkout?.estimatedDurationMinutes || 30} mins
               </span>
             </div>
             
@@ -67,8 +67,8 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
             {primaryVideoId && (
               <div className="aspect-video bg-gray-900 rounded-lg mb-4 relative overflow-hidden">
                 <VideoPlayer 
-                  youtubeId={primaryVideoId} 
-                  title={workout.title}
+                  youtubeId={primaryVideoId}
+                  title={currentDayWorkout?.title || workout?.name || "Workout Video"}
                   data-testid="video-workout-preview"
                 />
               </div>
@@ -85,7 +85,7 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
                     </div>
                     <span className="font-medium text-lg">{exercise.name}</span>
                   </div>
-                  <span className="text-gray-600">{exercise.duration} mins</span>
+                  <span className="text-gray-600">{exercise.durationMinutes || 0} mins</span>
                 </div>
               ))}
             </div>
@@ -123,7 +123,7 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Minutes Completed</span>
                     <span className="font-semibold text-xl" data-testid="text-minutes-completed">
-                      0 / {workout.totalMinutes}
+                      0 / {currentDayWorkout?.estimatedDurationMinutes || 30}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
@@ -152,14 +152,14 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
                 </h5>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-gray-900 mb-2" data-testid="text-current-weight">
-                    {user.currentWeight} lbs
+                    {user.weightPounds} lbs
                   </div>
                   <div className="text-sm text-green-600 mb-4">
                     <i className="fas fa-arrow-down mr-1"></i>
                     <span data-testid="text-weight-loss">
-                      {user.startWeight && user.currentWeight ? 
-                        `${user.startWeight - user.currentWeight} lbs from start` : 
-                        'Track your progress'
+                      {user.targetWeightPounds && user.weightPounds ? 
+                        `${Math.abs(user.weightPounds - user.targetWeightPounds)} lbs to goal` : 
+                        'Set your target weight'
                       }
                     </span>
                   </div>
@@ -192,7 +192,7 @@ export default function TodaysWorkout({ workout, user }: TodaysWorkoutProps) {
       <WorkoutModal 
         isOpen={showWorkoutModal}
         onClose={() => setShowWorkoutModal(false)}
-        workout={{ ...workout, exercises: JSON.stringify(exercises) as any }}
+        workout={workout}
         user={user}
       />
 

@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { Achievement, User } from "@shared/schema";
+import type { Achievement } from "@/types/api";
+import type { ApiUser } from "@/types/api";
 
 interface AchievementsPanelProps {
   achievements: Achievement[];
-  user: User;
+  user: ApiUser;
 }
 
 export default function AchievementsPanel({ achievements, user }: AchievementsPanelProps) {
@@ -24,7 +25,7 @@ export default function AchievementsPanel({ achievements, user }: AchievementsPa
   const upcomingBadges = [
     { name: "Weekend Warrior", icon: "star", description: "Complete 2 weekend workouts", progress: 1, target: 2 },
     { name: "Marathon Week", icon: "running", description: "Complete all 7 days in a week", progress: 4, target: 7 },
-    { name: "Weight Loss Champion", icon: "trophy", description: "Lose 10 pounds", progress: user.startWeight && user.currentWeight ? user.startWeight - user.currentWeight : 0, target: 10 }
+    { name: "Weight Loss Champion", icon: "trophy", description: "Lose 10 pounds", progress: user.targetWeightPounds && user.weightPounds ? Math.max(0, user.weightPounds - user.targetWeightPounds) : 0, target: 10 }
   ];
 
   return (
@@ -45,11 +46,11 @@ export default function AchievementsPanel({ achievements, user }: AchievementsPa
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
-                <i className={`fas fa-${recentAchievement.icon} text-white text-lg`}></i>
+                <i className="fas fa-star text-white text-lg"></i>
               </div>
               <div>
                 <h5 className="font-semibold text-gray-900" data-testid="text-recent-achievement-title">
-                  {recentAchievement.title}
+                  {recentAchievement.name}
                 </h5>
                 <p className="text-sm text-gray-600" data-testid="text-recent-achievement-desc">
                   {recentAchievement.description}
@@ -64,9 +65,9 @@ export default function AchievementsPanel({ achievements, user }: AchievementsPa
           {achievements.slice(0, 8).map((achievement, index) => (
             <div key={achievement.id} className="text-center" data-testid={`badge-${index}`}>
               <div className={`w-12 h-12 ${badgeColors[index % badgeColors.length]} rounded-full flex items-center justify-center mx-auto mb-2`}>
-                <i className={`fas fa-${achievement.icon} text-white`}></i>
+                <i className="fas fa-trophy text-white"></i>
               </div>
-              <span className="text-xs font-medium text-gray-700">{achievement.title}</span>
+              <span className="text-xs font-medium text-gray-700">{achievement.name}</span>
             </div>
           ))}
           

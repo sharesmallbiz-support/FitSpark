@@ -10,7 +10,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { authService } from "@/lib/apiService";
+import type { ApiUser, LoginRequest } from "@/types/api";
+import { apiThemeToClientTheme } from "@/lib/themes";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -22,7 +24,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function Login() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();
-  const { themeConfig } = useTheme();
+  const { setTheme, themeConfig } = useTheme();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,10 +39,19 @@ export default function Login() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/login", data);
-      const user = await response.json();
+      const loginData: LoginRequest = {
+        username: data.username,
+        password: data.password
+      };
+      
+      const user: ApiUser = await authService.login(loginData);
       
       login(user);
+      
+      // Set theme based on user's preference
+      const clientTheme = apiThemeToClientTheme(user.motivationTheme);
+      setTheme(clientTheme);
+      
       setLocation("/dashboard");
       
       toast({

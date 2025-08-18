@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { DailyProgress } from "@shared/schema";
+import type { DailyProgress } from "@/types/api";
 
 interface ProgressChartProps {
   progress: DailyProgress[];
@@ -35,9 +35,9 @@ export default function ProgressChart({ progress }: ProgressChartProps) {
         progress: dayProgress,
         isToday,
         isFuture,
-        minutesCompleted: dayProgress?.minutesCompleted || 0,
+        minutesCompleted: dayProgress?.actualDurationMinutes || 0,
         targetMinutes: 35, // Default target
-        completed: dayProgress?.completed || false
+        completed: dayProgress?.isCompleted || false
       };
     });
   };

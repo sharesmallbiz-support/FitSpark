@@ -24,10 +24,22 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
     {
-        builder
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader();
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            builder
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        }
+        else
+        {
+            // In production, only allow same origin since client is served from API
+            builder
+                .WithOrigins("https://localhost:7000", "https://localhost:5001") // Add your production URLs here
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        }
     });
 });
 
@@ -41,10 +53,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Enable static files serving from wwwroot
+app.UseStaticFiles();
+
 app.UseCors("AllowAll");
 app.UseAuthorization();
 
 app.MapControllers();
+
+// SPA fallback - serve index.html for non-API routes
+app.MapFallbackToFile("index.html");
 
 // Ensure database is created and seeded
 using (var scope = app.Services.CreateScope())

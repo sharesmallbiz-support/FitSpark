@@ -19,16 +19,14 @@ import Navigation from "@/components/Navigation";
 import VideoPlayer from "@/components/VideoPlayer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertVideoSchema, insertUserSchema } from "@shared/schema";
-import type { Video, User } from "@shared/schema";
+import { insertVideoSchema, insertUserSchema, User } from "@/types/client";
+import type { Video } from "@/types/api";
+import type { ApiUser } from "@/types/api";
 import { z } from "zod";
 
 const videoFormSchema = insertVideoSchema.extend({
   themeCompatibility: z.array(z.string()).min(1, "Select at least one theme"),
-}).transform(d => ({
-  ...d,
-  isApproved: d.isApproved ? 1 : 0
-}));
+});
 
 type VideoForm = z.infer<typeof videoFormSchema>;
 
@@ -312,7 +310,7 @@ export default function Admin() {
       startWeight: userToEdit.startWeight || undefined,
       currentWeight: userToEdit.currentWeight || undefined,
       targetWeight: userToEdit.targetWeight || undefined,
-      selectedTheme: userToEdit.selectedTheme
+      selectedTheme: userToEdit.selectedTheme || undefined
     });
     setShowUserModal(true);
   };

@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import Navigation from "@/components/Navigation";
 import TodaysWorkout from "@/components/TodaysWorkout";
 import { Card, CardContent } from "@/components/ui/card";
-import type { WorkoutPlan } from "@shared/schema";
+import type { WorkoutPlan } from "@/types/api";
 
 export default function WorkoutPlan() {
   const { user, isAuthenticated } = useAuth();
@@ -19,7 +19,7 @@ export default function WorkoutPlan() {
     }
   }, [isAuthenticated, setLocation]);
 
-  const workoutDay = day ? parseInt(day) : user?.currentDay || 1;
+  const workoutDay = day ? parseInt(day) : 1; // Default to day 1 since ApiUser doesn't have currentDay
 
   const { data: workout, isLoading } = useQuery<WorkoutPlan>({
     queryKey: ["/api/users", user?.id, "workout-plan", workoutDay],
@@ -56,12 +56,7 @@ export default function WorkoutPlan() {
             Day {workoutDay} Workout
           </h1>
           <p className="text-gray-600 mt-2">
-            {(() => {
-              const currentDay = user.currentDay ?? 0;
-              if (workoutDay === currentDay) return "Today's workout plan";
-              if (workoutDay < currentDay) return "Previous workout";
-              return "Upcoming workout";
-            })()}
+            Today's workout plan
           </p>
         </div>
 

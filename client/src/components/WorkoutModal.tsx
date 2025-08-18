@@ -9,7 +9,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { WorkoutPlan, User } from "@shared/schema";
+import type { WorkoutPlan } from "@/types/api";
+import type { ApiUser } from "@/types/api";
 
 interface PlanExercise { name: string; duration: number; completed?: boolean; videoId?: string; instructions?: string }
 
@@ -17,7 +18,7 @@ interface WorkoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   workout: WorkoutPlan;
-  user: User;
+  user: ApiUser;
 }
 
 export default function WorkoutModal({ isOpen, onClose, workout, user }: WorkoutModalProps) {
@@ -25,17 +26,16 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
   const { updateUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const parsedExercises: PlanExercise[] = Array.isArray(workout.exercises)
-    ? (workout.exercises as any)
-    : typeof workout.exercises === 'string' && workout.exercises.trim().startsWith('[')
-      ? (() => { try { return JSON.parse(workout.exercises) } catch { return [] } })()
-      : [];
-  const [exerciseStates, setExerciseStates] = useState<PlanExercise[]>(
-    parsedExercises.map(exercise => ({
+  // Use daily workouts from the API structure
+  const currentDayWorkout = workout?.dailyWorkouts?.[0];
+  const exercises = currentDayWorkout?.exercises || [];
+  
+  const [exerciseStates, setExerciseStates] = useState(
+    exercises.map(exercise => ({
+      id: exercise.id,
       name: exercise.name,
       completed: false,
-      duration: exercise.duration,
-      videoId: exercise.videoId,
+      durationMinutes: exercise.durationMinutes,
       instructions: exercise.instructions
     }))
   );
@@ -50,11 +50,11 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
       queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "achievements"] });
       
-      // Update user's current day
-  const nextDay = (user.currentDay || 0) + 1;
-      if (nextDay <= 30) {
-        updateUser({ currentDay: nextDay });
-      }
+      // Update user's current day - skipped since ApiUser doesn't have currentDay
+      // const nextDay = (user.currentDay || 0) + 1;
+      // if (nextDay <= 30) {
+      //   updateUser({ currentDay: nextDay });
+      // }
       
       toast({
         title: "Workout Completed!",
@@ -81,27 +81,27 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
 
   const handleSubmit = () => {
   const completedExercises = exerciseStates.filter(e => e.completed);
-  const minutesCompleted = completedExercises.reduce((total, e) => total + (e.duration || 0), 0);
+  const minutesCompleted = completedExercises.reduce((total, e) => total + (e.durationMinutes || 0), 0);
     const isWorkoutCompleted = completedExercises.length === exerciseStates.length;
 
     progressMutation.mutate({
-      day: workout.day,
-      minutesCompleted,
-      completed: isWorkoutCompleted,
-      exercises: exerciseStates,
+      dailyWorkoutId: currentDayWorkout?.id || 1,
+      isCompleted: isWorkoutCompleted,
+      actualDurationMinutes: minutesCompleted,
       notes,
-      mood
+      moodRating: mood,
+      date: new Date().toISOString()
     });
   };
 
   const completedCount = exerciseStates.filter(e => e.completed).length;
-  const totalMinutes = exerciseStates.filter(e => e.completed).reduce((total, e) => total + (e.duration || 0), 0);
+  const totalMinutes = exerciseStates.filter(e => e.completed).reduce((total, e) => total + (e.durationMinutes || 0), 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="modal-workout">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">{workout.title}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">{currentDayWorkout?.title || workout?.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -141,7 +141,7 @@ export default function WorkoutModal({ isOpen, onClose, workout, user }: Workout
                     <span className={`font-medium ${exercise.completed ? 'line-through text-gray-500' : ''}`}>
                       {exercise.name}
                     </span>
-                    <span className="text-sm text-gray-600 ml-2">{exercise.duration} min</span>
+                    <span className="text-sm text-gray-600 ml-2">{exercise.durationMinutes} min</span>
                   </div>
           {exercise.instructions && (
                     <p className="text-sm text-gray-600 mt-1">

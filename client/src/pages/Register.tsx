@@ -11,20 +11,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { authService } from "@/lib/apiService";
 import ThemeSelector from "@/components/ThemeSelector";
 import WelcomeWizard from "@/components/WelcomeWizard";
 import type { Theme } from "@/lib/themes";
+import { clientThemeToApiTheme, apiThemeToClientTheme } from "@/lib/themes";
+import type { ApiUser, RegisterRequest } from "@/types/api";
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   age: z.number().min(18, "Must be at least 18 years old").max(120, "Please enter a valid age"),
-  startWeight: z.number().min(50, "Please enter a valid weight").max(500, "Please enter a valid weight"),
-  targetWeight: z.number().min(50, "Please enter a valid target weight").max(500, "Please enter a valid target weight"),
-  selectedTheme: z.enum(["fun", "aggressive", "drill"]),
+  weightPounds: z.number().min(50, "Please enter a valid weight").max(500, "Please enter a valid weight"),
+  targetWeightPounds: z.number().min(50, "Please enter a valid target weight").max(500, "Please enter a valid target weight"),
+  motivationTheme: z.enum(["Fun", "Aggressive", "Drill"]),
+  fitnessGoal: z.string().optional(),
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -44,26 +48,31 @@ export default function Register() {
     defaultValues: {
       username: "",
       password: "",
-      name: "",
       email: "",
+      firstName: "",
+      lastName: "",
       age: wizardData?.timeCommitment === 15 ? 65 : wizardData?.timeCommitment === 30 ? 58 : 55,
-      startWeight: 190,
-      targetWeight: 175,
-      selectedTheme: wizardData?.motivationStyle || "fun",
+      weightPounds: 190,
+      targetWeightPounds: 175,
+      motivationTheme: (wizardData?.motivationStyle || "Fun") as "Fun" | "Aggressive" | "Drill",
+      fitnessGoal: "",
     },
   });
 
   const onThemeSelect = (theme: Theme) => {
     setSelectedTheme(theme);
     setTheme(theme);
-    form.setValue("selectedTheme", theme);
+    // Convert theme to API format
+    const apiTheme = clientThemeToApiTheme(theme);
+    form.setValue("motivationTheme", apiTheme as "Fun" | "Aggressive" | "Drill");
   };
 
   const handleWizardComplete = (goals: any) => {
     setWizardData(goals);
     setSelectedTheme(goals.motivationStyle);
     setTheme(goals.motivationStyle);
-    form.setValue("selectedTheme", goals.motivationStyle);
+    const apiTheme = clientThemeToApiTheme(goals.motivationStyle);
+    form.setValue("motivationTheme", apiTheme as "Fun" | "Aggressive" | "Drill");
     setShowWizard(false);
   };
 
@@ -74,23 +83,26 @@ export default function Register() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      const enhancedData = {
-        ...data,
-        fitnessGoals: wizardData || {
-          primaryGoal: 'overall-health',
-          timeCommitment: 30,
-          fitnessLevel: 'beginner',
-          healthConcerns: [],
-          motivationStyle: data.selectedTheme,
-          preferredActivities: []
-        }
+      const enhancedData: RegisterRequest = {
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        age: data.age,
+        weightPounds: data.weightPounds,
+        targetWeightPounds: data.targetWeightPounds,
+        motivationTheme: data.motivationTheme,
+        fitnessGoal: wizardData ? JSON.stringify(wizardData) : data.fitnessGoal || "General fitness"
       };
       
-      const response = await apiRequest("POST", "/api/auth/register", enhancedData);
-      const user = await response.json();
+      const response = await authService.register(enhancedData);
+      const user: ApiUser = response;
       
       login(user);
-      setTheme(data.selectedTheme);
+      // Convert API theme back to client format for theme context
+      const clientTheme = apiThemeToClientTheme(user.motivationTheme);
+      setTheme(clientTheme);
       setLocation("/dashboard");
       
       toast({
@@ -181,14 +193,14 @@ export default function Register() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="name"
+                      name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>First Name</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="Enter your full name"
-                              data-testid="input-name"
+                              placeholder="Enter your first name"
+                              data-testid="input-firstName"
                               {...field} 
                             />
                           </FormControl>
@@ -199,15 +211,14 @@ export default function Register() {
                     
                     <FormField
                       control={form.control}
-                      name="email"
+                      name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Last Name</FormLabel>
                           <FormControl>
                             <Input 
-                              type="email" 
-                              placeholder="Enter your email"
-                              data-testid="input-email"
+                              placeholder="Enter your last name"
+                              data-testid="input-lastName"
                               {...field} 
                             />
                           </FormControl>
@@ -216,6 +227,25 @@ export default function Register() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="Enter your email"
+                            data-testid="input-email"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-4">
@@ -247,7 +277,7 @@ export default function Register() {
                     
                     <FormField
                       control={form.control}
-                      name="startWeight"
+                      name="weightPounds"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Current Weight (lbs)</FormLabel>
@@ -255,7 +285,7 @@ export default function Register() {
                             <Input 
                               type="number" 
                               placeholder="190"
-                              data-testid="input-start-weight"
+                              data-testid="input-weightPounds"
                               {...field}
                               value={field.value || ''}
                               onChange={(e) => {
@@ -271,7 +301,7 @@ export default function Register() {
                     
                     <FormField
                       control={form.control}
-                      name="targetWeight"
+                      name="targetWeightPounds"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Target Weight (lbs)</FormLabel>
@@ -279,7 +309,7 @@ export default function Register() {
                             <Input 
                               type="number" 
                               placeholder="175"
-                              data-testid="input-target-weight"
+                              data-testid="input-targetWeightPounds"
                               {...field}
                               value={field.value || ''}
                               onChange={(e) => {

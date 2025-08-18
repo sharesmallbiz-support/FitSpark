@@ -1,18 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { User } from "@shared/schema";
+import type { ApiUser } from "@/types/api";
 
 interface AuthContextType {
-  user: User | null;
-  login: (userData: User) => void;
+  user: ApiUser | null;
+  login: (userData: ApiUser) => void;
   logout: () => void;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<ApiUser>) => void;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ApiUser | null>(null);
 
   useEffect(() => {
     // Try to restore user from localStorage
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: ApiUser) => {
     setUser(userData);
     localStorage.setItem("fitspark_user", JSON.stringify(userData));
   };
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("fitspark_user");
   };
 
-  const updateUser = (updates: Partial<User>) => {
+  const updateUser = (updates: Partial<ApiUser>) => {
     if (user) {
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);

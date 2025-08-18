@@ -12,12 +12,12 @@ export const themes = {
       primary: "bg-blue-500 hover:bg-blue-600",
       accent: "bg-orange-400 hover:bg-orange-500",
       text: "text-blue-700",
-      border: "border-blue-200"
+      border: "border-blue-200",
     },
-    icon: "🎉"
+    icon: "🎉",
   },
   aggressive: {
-    name: "Aggressive Mode", 
+    name: "Aggressive Mode",
     description: "Intense and challenging with powerful motivation",
     primary: "hsl(0, 84%, 60%)", // theme-aggressive red
     accent: "hsl(25, 95%, 53%)", // fiery orange
@@ -25,15 +25,15 @@ export const themes = {
     card: "hsl(0, 0%, 100%)",
     colors: {
       primary: "bg-red-600 hover:bg-red-700",
-      accent: "bg-orange-500 hover:bg-orange-600", 
+      accent: "bg-orange-500 hover:bg-orange-600",
       text: "text-red-700",
-      border: "border-red-200"
+      border: "border-red-200",
     },
-    icon: "🔥"
+    icon: "🔥",
   },
   drill: {
     name: "Drill Sergeant Mode",
-    description: "Disciplined and structured military-style approach", 
+    description: "Disciplined and structured military-style approach",
     primary: "hsl(84, 81%, 44%)", // theme-drill green
     accent: "hsl(45, 93%, 47%)", // military gold
     background: "hsl(84, 20%, 97%)",
@@ -41,13 +41,32 @@ export const themes = {
     colors: {
       primary: "bg-green-600 hover:bg-green-700",
       accent: "bg-yellow-500 hover:bg-yellow-600",
-      text: "text-green-700", 
-      border: "border-green-200"
+      text: "text-green-700",
+      border: "border-green-200",
     },
-    icon: "⚡"
-  }
+    icon: "⚡",
+  },
 };
 
 export function getThemeConfig(theme: Theme) {
   return themes[theme] || themes.fun;
+}
+
+// Helper functions to convert between API and client theme formats
+export function apiThemeToClientTheme(apiTheme: string): Theme {
+  const normalized = apiTheme.toLowerCase();
+  switch (normalized) {
+    case "fun":
+      return "fun";
+    case "aggressive":
+      return "aggressive";
+    case "drill":
+      return "drill";
+    default:
+      return "fun";
+  }
+}
+
+export function clientThemeToApiTheme(clientTheme: Theme): string {
+  return clientTheme.charAt(0).toUpperCase() + clientTheme.slice(1);
 }

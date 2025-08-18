@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import WeightLogModal from "@/components/WeightLogModal";
-import type { DailyProgress, Achievement } from "@shared/schema";
+import type { DailyProgress, Achievement } from "@/types/api";
 import { useEffect } from "react";
 
 export default function Progress() {

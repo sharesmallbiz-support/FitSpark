@@ -8,7 +8,7 @@ import DailyMotivation from "@/components/DailyMotivation";
 import TodaysWorkout from "@/components/TodaysWorkout";
 import ProgressChart from "@/components/ProgressChart";
 import AchievementsPanel from "@/components/AchievementsPanel";
-import type { WorkoutPlan, DailyProgress, Achievement } from "@shared/schema";
+import type { WorkoutPlan, DailyProgress, Achievement } from "@/types/api";
 
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuth();
@@ -21,8 +21,8 @@ export default function Dashboard() {
       return;
     }
     
-    if (user?.selectedTheme) {
-      const possible = user.selectedTheme as any;
+    if (user?.motivationTheme) {
+      const possible = user.motivationTheme as any;
       if (possible === "fun" || possible === "aggressive" || possible === "drill") {
         setTheme(possible);
       }
@@ -35,8 +35,9 @@ export default function Dashboard() {
   });
 
   const { data: todaysWorkout } = useQuery<WorkoutPlan>({
-    queryKey: ["/api/users", user?.id, "workout-plan", user?.currentDay],
-    enabled: !!user?.id && !!user?.currentDay,
+    // Since ApiUser doesn't have currentDay, we'll use a default
+    queryKey: ["/api/users", user?.id, "workout-plan", 1],
+    enabled: !!user?.id,
   });
 
   const { data: progress } = useQuery<DailyProgress[]>({
@@ -93,7 +94,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                 <span className="font-medium">Current Theme</span>
                 <span className="text-sm text-blue-600" data-testid="text-current-theme">
-                  {user.selectedTheme}
+                  {user.motivationTheme}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
@@ -116,7 +117,7 @@ export default function Dashboard() {
                     const date = new Date(p.date);
                     const weekStart = new Date();
                     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-                    return date >= weekStart && p.completed;
+                    return date >= weekStart && p.isCompleted;
                   }).length || 0}/7
                 </span>
               </div>
@@ -128,7 +129,7 @@ export default function Dashboard() {
                     const weekStart = new Date();
                     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
                     return date >= weekStart;
-                  }).reduce((total, p) => total + (p.minutesCompleted || 0), 0) || 0} min
+                  }).reduce((total, p) => total + (p.actualDurationMinutes || 0), 0) || 0} min
                 </span>
               </div>
             </div>
@@ -141,23 +142,23 @@ export default function Dashboard() {
             </h5>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Start Weight</span>
-                <span className="font-semibold" data-testid="text-start-weight">
-                  {user.startWeight} lbs
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
                 <span className="text-gray-600">Current Weight</span>
-                <span className="font-semibold" data-testid="text-current-weight">
-                  {user.currentWeight} lbs
+                <span className="font-semibold" data-testid="text-start-weight">
+                  {user.weightPounds} lbs
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Progress</span>
+                <span className="text-gray-600">Target Weight</span>
+                <span className="font-semibold" data-testid="text-current-weight">
+                  {user.targetWeightPounds} lbs
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">To Goal</span>
                 <span className="font-semibold text-green-600" data-testid="text-weight-progress">
-                  {user.startWeight && user.currentWeight ? 
-                    `${user.startWeight - user.currentWeight} lbs lost` : 
-                    'Track your progress'
+                  {user.targetWeightPounds && user.weightPounds ? 
+                    `${Math.abs(user.weightPounds - user.targetWeightPounds)} lbs to goal` : 
+                    'Set your target weight'
                   }
                 </span>
               </div>

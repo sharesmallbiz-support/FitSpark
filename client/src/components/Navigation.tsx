@@ -11,7 +11,9 @@ export default function Navigation() {
 
   if (!user) return null;
 
-  const getInitials = (name: string) => {
+  const getInitials = (firstName?: string, lastName?: string) => {
+    const name = [firstName, lastName].filter(Boolean).join(' ');
+    if (!name) return user?.username?.substring(0, 2).toUpperCase() || 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
@@ -21,7 +23,7 @@ export default function Navigation() {
     { path: "/progress", label: "Progress", icon: "fas fa-chart-line" },
   ];
 
-  if (user.isAdmin) {
+  if (user.role === 'Admin') {
     navItems.push({ path: "/admin", label: "Admin", icon: "fas fa-cog" });
   }
 
@@ -45,30 +47,32 @@ export default function Navigation() {
           
           <nav className="hidden md:flex space-x-8">
             {navItems.map((item) => (
-              <Link key={item.path} href={item.path}>
-                <a 
-                  className={`text-gray-600 hover:text-fit-navy font-medium transition-colors ${
-                    location.startsWith(item.path) ? 'text-fit-navy' : ''
-                  }`}
-                  data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <i className={`${item.icon} mr-2`}></i>
-                  {item.label}
-                </a>
+              <Link 
+                key={item.path} 
+                href={item.path}
+                className={`text-gray-600 hover:text-fit-navy font-medium transition-colors ${
+                  location.startsWith(item.path) ? 'text-fit-navy' : ''
+                }`}
+                data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <i className={`${item.icon} mr-2`}></i>
+                {item.label}
               </Link>
             ))}
           </nav>
 
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm font-medium" data-testid="text-user-name">{user.name}</p>
+              <p className="text-sm font-medium" data-testid="text-user-name">
+                {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}
+              </p>
               <p className="text-xs text-gray-500" data-testid="text-current-day">
-                Day {user.currentDay} of 30
+                Active User
               </p>
             </div>
             <Avatar className="w-10 h-10 bg-fit-navy">
               <AvatarFallback className="bg-fit-navy text-white font-semibold" data-testid="avatar-initials">
-                {getInitials(user.name)}
+                {getInitials(user.firstName, user.lastName)}
               </AvatarFallback>
             </Avatar>
             <Button 

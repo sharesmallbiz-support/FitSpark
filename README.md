@@ -22,41 +22,83 @@ Inclusivity: Application should use gender-neutral language for all people over 
 
 ### Backend Architecture
 
-- **Runtime**: Node.js with Express.js REST API
-- **Type Safety**: Shared TypeScript schemas between client and server using Zod
-- **Database ORM**: Drizzle ORM with PostgreSQL dialect
-- **Authentication**: Bcrypt for password hashing with localStorage session management
-- **AI Integration**: OpenAI GPT-4o for personalized workout generation and motivational content
+- **Framework**: .NET 9 Web API with Entity Framework Core
+- **Database**: SQLite with Entity Framework migrations
+- **Authentication**: BCrypt for password hashing with comprehensive user management
+- **API Documentation**: Swagger/OpenAPI integration
+- **CORS**: Configured for both development and production scenarios
+
+### Unified Deployment
+
+The application is now configured as a single deployment unit:
+
+- The React frontend is built and served from the .NET API's `wwwroot` folder
+- Both client and API are served from the same origin
+- SPA routing is handled by fallback to `index.html`
+- API endpoints are available at `/api/*` routes
 
 ### Data Storage Solutions
 
-- **Primary Storage**: In-memory storage with comprehensive mock data for evaluation
-- **Mock Data Includes**:
-  - Demo users (regular user and admin) with pre-populated fitness metrics
-  - Sample workout plans with AI-generated content structure
-  - Video library with YouTube integration and exercise categorization
-  - Multi-day progress tracking with mood and completion metrics
-  - Achievement system with earned badges and progression logic
+- **Primary Storage**: SQLite database with Entity Framework Core
+- **Comprehensive Models**: Users, Workout Plans, Daily Workouts, Exercises, Progress Tracking, Videos, Achievements
+- **Mock Data**: DataSeedingService provides initial data for evaluation
+- **Achievement System**: Points, badges, and leaderboard functionality
 
 ### Authentication and Authorization
 
-- **Registration Flow**: Multi-step with fitness goals, weight targets, and theme selection
-- **Session Management**: Client-side localStorage with server-side validation
-- **Admin System**: Role-based access for video management and user oversight
-- **Security**: Bcrypt password hashing with input validation using Zod schemas
+- **Registration Flow**: Comprehensive user registration with fitness metrics
+- **Session Management**: API-based authentication with user roles
+- **Admin System**: Role-based access for content management
+- **Security**: BCrypt password hashing with comprehensive input validation
 
-### External Dependencies
+### Build and Deployment
 
-- **AI Services**: OpenAI API for personalized content generation
-- **Video Content**: YouTube embedded player integration
-- **UI Framework**: Radix UI primitives for accessible components
-- **Build Tools**: Vite with TypeScript, PostCSS, and Autoprefixer
-// ...existing content...
+#### Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Build and run the application
+./build.ps1
+dotnet run --project FitSpark.Api/FitSpark.Api.csproj
+```
+
+#### Development Workflow
+
+```bash
+# For full-stack development (recommended)
+dotnet run --project FitSpark.Api/FitSpark.Api.csproj
+
+# For client-only development with hot reload
+npm run dev  # Uses proxy to API at localhost:5000
+```
+
+#### Build Commands
+
+```bash
+npm run build:client    # Builds React app to FitSpark.Api/wwwroot
+npm run build:api       # Builds .NET API
+npm run build:all       # Builds both client and API
+npm run start:api       # Builds and runs the unified application
+```
+
+#### Production Deployment
+
+```bash
+# Build for production
+npm run build:all
+
+# Run production server
+dotnet run --project FitSpark.Api/FitSpark.Api.csproj --configuration Release
+```
+
+The application will be available at the configured port (default: <https://localhost:7000> for development, <https://localhost:5001> for production) serving both the API and the client application.
 
 ### Evaluation Setup
 
 - **Demo Users**: Pre-configured accounts for immediate testing
-  - Regular User: username: `demo`, password: `demo123` (5 days progress)
-  - Admin User: username: `admin`, password: `demo123` (full admin access)
-- **Mock Data**: Complete dataset including progress, achievements, and video library
-- **No Database Dependencies**: Fully functional with in-memory storage only
+  - Regular User: username: `demo`, password: `demo123`
+  - Admin User: username: `admin`, password: `demo123`
+- **Database**: SQLite database with seeded data including users, workouts, progress, and achievements
+- **Single Port**: Both API and client served from the same port for simplified deployment

@@ -1,0 +1,30 @@
+# Ignore build outputs
+**/bin/
+**/obj/
+**/publish/
+
+# Ignore node modules
+node_modules/
+npm-debug.log*
+
+# Ignore database files
+*.db
+*.db-shm
+*.db-wal
+
+# Ignore environment files
+.env
+.env.local
+.env.production
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore deployment scripts
+*.ps1
+*.sh
+
+# Keep docker files
+!Dockerfile
+!docker-compose.yml

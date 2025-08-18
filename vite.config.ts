@@ -17,13 +17,20 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(import.meta.dirname, "FitSpark.Api/wwwroot"),
     emptyOutDir: true,
   },
   server: {
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:5155",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });
