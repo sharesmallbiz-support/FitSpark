@@ -81,13 +81,47 @@ export default function Progress() {
   const averageMinutes = filteredProgress.length > 0 ? Math.round(totalMinutes / filteredProgress.length) : 0;
 
   const getWeightData = () => {
-    return progress
+    // Get weight entries from progress data
+    const progressWeightData = progress
       .filter((p: DailyProgress) => p.weight)
       .sort((a: DailyProgress, b: DailyProgress) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // If user has a current weight and it's not already in today's progress, add it as today's entry
+    const userCurrentWeight = user.weightPounds || user.currentWeight;
+    if (userCurrentWeight) {
+      const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+      const hasWeightToday = progressWeightData.some(p => {
+        const entryDate = new Date(p.date).toISOString().split('T')[0];
+        return entryDate === today;
+      });
+
+      if (!hasWeightToday) {
+        // Create a virtual progress entry for the user's current weight
+        const todayWeightEntry: DailyProgress = {
+          id: -1, // Virtual entry ID
+          userId: user.id,
+          dailyWorkoutId: -1, // Virtual workout ID
+          date: today,
+          isCompleted: false,
+          weightPounds: userCurrentWeight,
+          weight: userCurrentWeight, // Legacy compatibility
+          createdAt: new Date().toISOString(),
+          exerciseProgress: [],
+          // Legacy compatibility properties
+          completed: false,
+          minutesCompleted: 0
+        };
+
+        // Add today's weight entry to the end (most recent)
+        return [...progressWeightData, todayWeightEntry];
+      }
+    }
+
+    return progressWeightData;
   };
 
   const weightData = getWeightData();
-  const latestWeight = weightData[weightData.length - 1]?.weight || user.currentWeight;
+  const latestWeight = weightData[weightData.length - 1]?.weight || user.weightPounds || user.currentWeight;
   const weightLoss = user.startWeight && latestWeight ? user.startWeight - latestWeight : 0;
 
   const getStreakData = () => {

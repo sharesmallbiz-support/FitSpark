@@ -43,7 +43,21 @@ export const authService = {
     return response.json();
   },
 
-  async updateUser(id: number, updates: Partial<ApiUser>): Promise<ApiUser> {
+  async updateUser(
+    id: number,
+    updates: {
+      firstName?: string;
+      lastName?: string;
+      age?: number;
+      weightPounds?: number;
+      targetWeightPounds?: number;
+      heightFeet?: string;
+      heightInches?: string;
+      gender?: string;
+      fitnessGoal?: string;
+      motivationTheme?: string;
+    }
+  ): Promise<ApiUser> {
     const response = await apiRequest(
       "PUT",
       API_ENDPOINTS.auth.updateUser(id),

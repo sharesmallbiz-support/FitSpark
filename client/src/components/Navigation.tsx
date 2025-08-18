@@ -19,6 +19,7 @@ export default function Navigation() {
 
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: "fas fa-home" },
+    { path: "/workout-plans", label: "Workout Plans", icon: "fas fa-list" },
     { path: "/workout", label: "Today's Workout", icon: "fas fa-dumbbell" },
     { path: "/progress", label: "Progress", icon: "fas fa-chart-line" },
   ];
@@ -63,18 +64,22 @@ export default function Navigation() {
 
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm font-medium" data-testid="text-user-name">
-                {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}
-              </p>
+              <Link href="/profile">
+                <p className="text-sm font-medium cursor-pointer hover:text-fit-navy transition-colors" data-testid="text-user-name">
+                  {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}
+                </p>
+              </Link>
               <p className="text-xs text-gray-500" data-testid="text-current-day">
                 Active User
               </p>
             </div>
-            <Avatar className="w-10 h-10 bg-fit-navy">
-              <AvatarFallback className="bg-fit-navy text-white font-semibold" data-testid="avatar-initials">
-                {getInitials(user.firstName, user.lastName)}
-              </AvatarFallback>
-            </Avatar>
+            <Link href="/profile">
+              <Avatar className="w-10 h-10 bg-fit-navy cursor-pointer hover:opacity-80 transition-opacity">
+                <AvatarFallback className="bg-fit-navy text-white font-semibold" data-testid="avatar-initials">
+                  {getInitials(user.firstName, user.lastName)}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
             <Button 
               variant="outline" 
               size="sm" 

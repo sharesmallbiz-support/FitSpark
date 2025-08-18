@@ -39,6 +39,31 @@ public class CreateWorkoutPlanDto
     public DateTime? StartDate { get; set; }
 }
 
+public class UpdateWorkoutPlanDto
+{
+    [StringLength(100)]
+    public string? Name { get; set; }
+
+    [StringLength(500)]
+    public string? Description { get; set; }
+
+    [Range(1, 365)]
+    public int? DurationDays { get; set; }
+
+    [StringLength(20)]
+    public string? DifficultyLevel { get; set; }
+
+    [StringLength(20)]
+    public string? MotivationTheme { get; set; }
+
+    public DateTime? StartDate { get; set; }
+}
+
+public class UpdateWorkoutPlanStatusDto
+{
+    public bool IsActive { get; set; }
+}
+
 public class DailyWorkoutDto
 {
     public int Id { get; set; }

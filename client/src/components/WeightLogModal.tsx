@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { authService } from "@/lib/apiService";
 import type { ApiUser } from "@/types/api";
 
 interface WeightLogModalProps {
@@ -25,26 +25,23 @@ export default function WeightLogModal({ isOpen, onClose, user }: WeightLogModal
 
   const weightMutation = useMutation({
     mutationFn: async (newWeight: number) => {
-      // Update user's current weight
-      await apiRequest("PATCH", `/api/users/${user.id}`, { weightPounds: newWeight });
-      
-      // Log today's weight in progress
-      const today = new Date().toISOString().split('T')[0];
-      return apiRequest("POST", `/api/users/${user.id}/progress`, {
-        dailyWorkoutId: 1, // This should be dynamic based on current workout
-        weightPounds: newWeight,
-        date: today
+      // Update user's current weight using the correct API service
+      const updatedUser = await authService.updateUser(user.id, { 
+        weightPounds: newWeight 
       });
+      
+      return updatedUser;
     },
-    onSuccess: (_, newWeight) => {
+    onSuccess: (updatedUser) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "progress"] });
       
-      updateUser({ weightPounds: newWeight });
+      // Update the user context with the new weight
+      updateUser(updatedUser);
       
       toast({
         title: "Weight Updated!",
-        description: `Your weight has been recorded as ${newWeight} lbs.`,
+        description: `Your weight has been recorded as ${updatedUser.weightPounds} lbs.`,
       });
       onClose();
     },
@@ -81,6 +78,9 @@ export default function WeightLogModal({ isOpen, onClose, user }: WeightLogModal
       <DialogContent className="max-w-md" data-testid="modal-weight-log">
         <DialogHeader>
           <DialogTitle>Update Your Weight</DialogTitle>
+          <DialogDescription>
+            Record your current weight to track your progress toward your fitness goals.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

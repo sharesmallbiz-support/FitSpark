@@ -96,16 +96,16 @@ public class AuthService : IAuthService
         }
 
         // Update only provided fields
-        if (updateDto.FirstName != null) user.FirstName = updateDto.FirstName;
-        if (updateDto.LastName != null) user.LastName = updateDto.LastName;
+        if (!string.IsNullOrWhiteSpace(updateDto.FirstName)) user.FirstName = updateDto.FirstName;
+        if (!string.IsNullOrWhiteSpace(updateDto.LastName)) user.LastName = updateDto.LastName;
         if (updateDto.Age.HasValue) user.Age = updateDto.Age;
         if (updateDto.WeightPounds.HasValue) user.WeightPounds = updateDto.WeightPounds;
         if (updateDto.TargetWeightPounds.HasValue) user.TargetWeightPounds = updateDto.TargetWeightPounds;
-        if (updateDto.HeightFeet != null) user.HeightFeet = updateDto.HeightFeet;
-        if (updateDto.HeightInches != null) user.HeightInches = updateDto.HeightInches;
-        if (updateDto.Gender != null) user.Gender = updateDto.Gender;
-        if (updateDto.FitnessGoal != null) user.FitnessGoal = updateDto.FitnessGoal;
-        if (updateDto.MotivationTheme != null) user.MotivationTheme = updateDto.MotivationTheme;
+        if (!string.IsNullOrWhiteSpace(updateDto.HeightFeet)) user.HeightFeet = updateDto.HeightFeet;
+        if (!string.IsNullOrWhiteSpace(updateDto.HeightInches)) user.HeightInches = updateDto.HeightInches;
+        if (!string.IsNullOrWhiteSpace(updateDto.Gender)) user.Gender = updateDto.Gender;
+        if (!string.IsNullOrWhiteSpace(updateDto.FitnessGoal)) user.FitnessGoal = updateDto.FitnessGoal;
+        if (!string.IsNullOrWhiteSpace(updateDto.MotivationTheme)) user.MotivationTheme = updateDto.MotivationTheme;
 
         await _context.SaveChangesAsync();
 

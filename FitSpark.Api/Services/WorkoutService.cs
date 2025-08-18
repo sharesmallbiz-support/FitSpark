@@ -10,6 +10,8 @@ public interface IWorkoutService
     Task<IEnumerable<WorkoutPlanDto>> GetUserWorkoutPlansAsync(int userId);
     Task<WorkoutPlanDto?> GetWorkoutPlanAsync(int planId, int userId);
     Task<WorkoutPlanDto?> CreateWorkoutPlanAsync(int userId, CreateWorkoutPlanDto createDto);
+    Task<WorkoutPlanDto?> UpdateWorkoutPlanAsync(int planId, int userId, UpdateWorkoutPlanDto updateDto);
+    Task<WorkoutPlanDto?> UpdateWorkoutPlanStatusAsync(int planId, int userId, bool isActive);
     Task<DailyWorkoutDto?> GetDailyWorkoutAsync(int workoutId, int userId);
     Task<IEnumerable<DailyWorkoutDto>> GetDailyWorkoutsForPlanAsync(int planId, int userId);
     Task<DailyWorkoutDto?> CreateDailyWorkoutAsync(CreateDailyWorkoutDto createDto, int userId);
@@ -65,6 +67,74 @@ public class WorkoutService : IWorkoutService
         };
 
         _context.WorkoutPlans.Add(plan);
+        await _context.SaveChangesAsync();
+
+        return MapToWorkoutPlanDto(plan);
+    }
+
+    public async Task<WorkoutPlanDto?> UpdateWorkoutPlanAsync(int planId, int userId, UpdateWorkoutPlanDto updateDto)
+    {
+        var plan = await _context.WorkoutPlans
+            .Where(wp => wp.Id == planId && wp.UserId == userId && wp.IsActive)
+            .Include(wp => wp.DailyWorkouts)
+                .ThenInclude(dw => dw.Exercises)
+            .FirstOrDefaultAsync();
+
+        if (plan == null)
+        {
+            return null;
+        }
+
+        // Update only provided fields
+        if (!string.IsNullOrWhiteSpace(updateDto.Name))
+        {
+            plan.Name = updateDto.Name;
+        }
+        if (updateDto.Description != null)
+        {
+            plan.Description = updateDto.Description;
+        }
+        if (updateDto.DurationDays.HasValue)
+        {
+            plan.DurationDays = updateDto.DurationDays.Value;
+            if (plan.StartDate.HasValue)
+            {
+                plan.EndDate = plan.StartDate.Value.AddDays(plan.DurationDays - 1);
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(updateDto.DifficultyLevel))
+        {
+            plan.DifficultyLevel = updateDto.DifficultyLevel;
+        }
+        if (!string.IsNullOrWhiteSpace(updateDto.MotivationTheme))
+        {
+            plan.MotivationTheme = updateDto.MotivationTheme;
+        }
+        if (updateDto.StartDate.HasValue)
+        {
+            plan.StartDate = updateDto.StartDate;
+            plan.EndDate = updateDto.StartDate.Value.AddDays(plan.DurationDays - 1);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return MapToWorkoutPlanDto(plan);
+    }
+
+    public async Task<WorkoutPlanDto?> UpdateWorkoutPlanStatusAsync(int planId, int userId, bool isActive)
+    {
+        var plan = await _context.WorkoutPlans
+            .Where(wp => wp.Id == planId && wp.UserId == userId)
+            .Include(wp => wp.DailyWorkouts)
+                .ThenInclude(dw => dw.Exercises)
+            .FirstOrDefaultAsync();
+
+        if (plan == null)
+        {
+            return null;
+        }
+
+        plan.IsActive = isActive;
         await _context.SaveChangesAsync();
 
         return MapToWorkoutPlanDto(plan);

@@ -63,6 +63,28 @@ export interface WorkoutPlan {
   dailyWorkouts: DailyWorkout[];
 }
 
+export interface CreateWorkoutPlanDto {
+  name: string;
+  description?: string;
+  durationDays: number;
+  difficultyLevel: string;
+  motivationTheme: string;
+  startDate?: Date;
+}
+
+export interface UpdateWorkoutPlanDto {
+  name?: string;
+  description?: string;
+  durationDays?: number;
+  difficultyLevel?: string;
+  motivationTheme?: string;
+  startDate?: Date;
+}
+
+export interface UpdateWorkoutPlanStatusDto {
+  isActive: boolean;
+}
+
 export interface DailyWorkout {
   id: number;
   workoutPlanId: number;

@@ -51,6 +51,40 @@ public class WorkoutsController : ControllerBase
         return CreatedAtAction(nameof(GetWorkoutPlan), new { planId = plan.Id, userId = userId }, plan);
     }
 
+    [HttpPut("plans/{planId}/user/{userId}")]
+    public async Task<ActionResult<WorkoutPlanDto>> UpdateWorkoutPlan(int planId, int userId, [FromBody] UpdateWorkoutPlanDto updateDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var plan = await _workoutService.UpdateWorkoutPlanAsync(planId, userId, updateDto);
+        if (plan == null)
+        {
+            return NotFound(new { message = "Workout plan not found" });
+        }
+
+        return Ok(plan);
+    }
+
+    [HttpPut("plans/{planId}/user/{userId}/status")]
+    public async Task<ActionResult<WorkoutPlanDto>> UpdateWorkoutPlanStatus(int planId, int userId, [FromBody] UpdateWorkoutPlanStatusDto statusDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var plan = await _workoutService.UpdateWorkoutPlanStatusAsync(planId, userId, statusDto.IsActive);
+        if (plan == null)
+        {
+            return NotFound(new { message = "Workout plan not found" });
+        }
+
+        return Ok(plan);
+    }
+
     [HttpGet("daily/{workoutId}/user/{userId}")]
     public async Task<ActionResult<DailyWorkoutDto>> GetDailyWorkout(int workoutId, int userId)
     {

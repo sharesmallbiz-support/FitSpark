@@ -10,8 +10,10 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import WorkoutPlan from "@/pages/WorkoutPlan";
+import WorkoutPlans from "@/pages/WorkoutPlans";
 import Progress from "@/pages/Progress";
 import Admin from "@/pages/Admin";
+import UserProfile from "@/pages/UserProfile";
 
 function Router() {
   return (
@@ -21,7 +23,9 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/workout/:day?" component={WorkoutPlan} />
+      <Route path="/workout-plans" component={WorkoutPlans} />
       <Route path="/progress" component={Progress} />
+      <Route path="/profile" component={UserProfile} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
