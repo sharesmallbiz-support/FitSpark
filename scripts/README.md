@@ -97,6 +97,7 @@ scripts/
 ```
 
 **Benefits:**
+
 - 📁 **Organized**: All reports in one dedicated folder
 - 🚫 **Git-ignored**: Reports are excluded from version control automatically
 - 🔄 **Consistent**: Same location regardless of how script is executed

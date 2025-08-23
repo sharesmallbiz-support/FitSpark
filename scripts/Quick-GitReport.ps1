@@ -54,7 +54,7 @@ if (-not (Test-Path $mainScript)) {
     exit 1
 }
 
-Write-Host "🚀 Quick Git Report Launcher" -ForegroundColor Cyan
+Write-Host "Quick Git Report Launcher" -ForegroundColor Cyan
 Write-Host "Preset: $Preset ($days days) | Format: $Format" -ForegroundColor Yellow
 
 if ($Preset -eq "Custom") {
@@ -73,7 +73,7 @@ try {
     # Create the report directory if it doesn't exist
     if (-not (Test-Path $reportsPath)) {
         New-Item -ItemType Directory -Path $reportsPath -Force | Out-Null
-        Write-Host "📁 Created report directory: $reportsPath" -ForegroundColor Green
+        Write-Host "Created report directory: $reportsPath" -ForegroundColor Green
     }
     
     & $mainScript -Days $days -Format $Format -OutputPath $reportsPath

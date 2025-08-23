@@ -61,7 +61,7 @@ if ([string]::IsNullOrEmpty($OutputPath)) {
     # Create the report directory if it doesn't exist
     if (-not (Test-Path $OutputPath)) {
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
-        Write-Host "📁 Created report directory: $OutputPath" -ForegroundColor Green
+        Write-Host "Created report directory: $OutputPath" -ForegroundColor Green
     }
 }
 
@@ -78,7 +78,7 @@ $reportData = @{
     Recommendations = @()
 }
 
-Write-Host "🔍 Analyzing Git repository activity for the last $Days days..." -ForegroundColor Cyan
+Write-Host "Analyzing Git repository activity for the last $Days days..." -ForegroundColor Cyan
 
 # Get repository information
 function Get-RepositoryInfo {
@@ -712,16 +712,16 @@ function Show-ConsoleReport {
     param([hashtable]$ReportData)
     
     Write-Host "`n" + "="*80 -ForegroundColor Cyan
-    Write-Host "  📊 GIT ACTIVITY REPORT - $($ReportData.Repository.Name)" -ForegroundColor Cyan
+    Write-Host "  GIT ACTIVITY REPORT - $($ReportData.Repository.Name)" -ForegroundColor Cyan
     Write-Host "="*80 -ForegroundColor Cyan
     
-    Write-Host "`n🏛️  REPOSITORY OVERVIEW" -ForegroundColor Yellow
+    Write-Host "`nREPOSITORY OVERVIEW" -ForegroundColor Yellow
     Write-Host "  Name: $($ReportData.Repository.Name)"
     Write-Host "  Branch: $($ReportData.Repository.Branch)"
     Write-Host "  Analysis Period: Last $($ReportData.AnalysisPeriod) days"
     Write-Host "  Generated: $($ReportData.GeneratedAt)"
     
-    Write-Host "`n📈 KEY METRICS" -ForegroundColor Yellow
+    Write-Host "`nKEY METRICS" -ForegroundColor Yellow
     Write-Host "  Total Commits: $($ReportData.Metrics.TotalCommits)"
     Write-Host "  Lines Added: $($ReportData.Metrics.TotalLinesAdded)"
     Write-Host "  Lines Deleted: $($ReportData.Metrics.TotalLinesDeleted)"
@@ -729,14 +729,14 @@ function Show-ConsoleReport {
     Write-Host "  Average Churn per Commit: $($ReportData.Metrics.AverageChurnPerCommit) lines"
     Write-Host "  Churn Rate: $([math]::Round($ReportData.Metrics.ChurnRate, 2))"
     
-    Write-Host "`n👥 TOP AUTHORS" -ForegroundColor Yellow
+    Write-Host "`nTOP AUTHORS" -ForegroundColor Yellow
     $topAuthors = $ReportData.Authors.GetEnumerator() | Sort-Object { $_.Value.Commits } -Descending | Select-Object -First 5
     foreach ($author in $topAuthors) {
         $authorData = $author.Value
         Write-Host "  $($author.Key): $($authorData.Commits) commits, +$($authorData.LinesAdded)/-$($authorData.LinesDeleted) lines"
     }
     
-    Write-Host "`n📁 TOP MODIFIED FILES" -ForegroundColor Yellow
+    Write-Host "`nTOP MODIFIED FILES" -ForegroundColor Yellow
     $topFiles = $ReportData.Metrics.FileChurnDistribution.GetEnumerator() | 
     Sort-Object { $_.Value.Added + $_.Value.Deleted } -Descending | 
     Select-Object -First 5
@@ -752,7 +752,7 @@ function Show-ConsoleReport {
         default { "Yellow" }
     }
     
-    Write-Host "`n🔍 INSIGHTS" -ForegroundColor Yellow
+    Write-Host "`nINSIGHTS" -ForegroundColor Yellow
     Write-Host "  Overall Health: " -NoNewline
     Write-Host $ReportData.Insights.OverallHealth -ForegroundColor $healthColor
     
@@ -764,7 +764,7 @@ function Show-ConsoleReport {
     }
     
     if ($ReportData.Recommendations.Count -gt 0) {
-        Write-Host "`n💡 RECOMMENDATIONS" -ForegroundColor Yellow
+        Write-Host "`nRECOMMENDATIONS" -ForegroundColor Yellow
         foreach ($recommendation in $ReportData.Recommendations) {
             Write-Host "  • $recommendation" -ForegroundColor Green
         }
@@ -775,7 +775,7 @@ function Show-ConsoleReport {
 
 # Main execution
 try {
-    Write-Host "🚀 Starting Git Activity Analysis..." -ForegroundColor Green
+    Write-Host "Starting Git Activity Analysis..." -ForegroundColor Green
     
     # Gather data
     $reportData.Repository = Get-RepositoryInfo
@@ -792,7 +792,7 @@ try {
     switch ($Format) {
         "HTML" {
             $outputFile = Generate-HtmlReport -ReportData $reportData -OutputPath $OutputPath
-            Write-Host "✅ HTML report generated: $outputFile" -ForegroundColor Green
+            Write-Host "HTML report generated: $outputFile" -ForegroundColor Green
             
             # Open the report in default browser
             if (Get-Command "Start-Process" -ErrorAction SilentlyContinue) {
@@ -801,14 +801,14 @@ try {
         }
         "JSON" {
             $outputFile = Generate-JsonReport -ReportData $reportData -OutputPath $OutputPath
-            Write-Host "✅ JSON report generated: $outputFile" -ForegroundColor Green
+            Write-Host "JSON report generated: $outputFile" -ForegroundColor Green
         }
         "Console" {
             Show-ConsoleReport -ReportData $reportData
         }
     }
     
-    Write-Host "`n🎉 Analysis complete!" -ForegroundColor Green
+    Write-Host "`nAnalysis complete!" -ForegroundColor Green
     Write-Host "Summary: $($reportData.Metrics.TotalCommits) commits, $($reportData.Authors.Count) authors, $($reportData.Metrics.TotalFilesChanged) files changed" -ForegroundColor Cyan
 }
 catch {

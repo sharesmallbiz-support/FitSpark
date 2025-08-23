@@ -199,6 +199,27 @@ npm run start:api       # Build and run unified application
 | `npm run check` | TypeScript type checking |
 | `npm run preview` | Preview production build |
 
+### 📊 Development Analytics
+
+The project includes powerful development analytics tools in the `/scripts` directory:
+
+- **Git Activity Reports**: Comprehensive repository analysis with code churn metrics, author productivity, and best practices assessment
+- **Multiple Output Formats**: HTML reports with visualizations, JSON for CI/CD integration, and console output for quick reviews
+- **Quality Insights**: Automated recommendations for code quality, commit patterns, and development workflow improvements
+
+```bash
+# Generate a beautiful HTML report for the last 7 days
+.\scripts\Generate-GitActivityReport.ps1 -Days 7 -Format HTML
+
+# Quick console overview for standups
+.\scripts\Quick-GitReport.ps1 -Preset Daily -Format Console
+
+# Windows GUI launcher (double-click to run)
+.\scripts\RunGitReport.bat
+```
+
+See the [scripts README](scripts/README.md) for detailed documentation and examples.
+
 ### Database Management
 
 ```bash
